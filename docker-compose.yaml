@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  invenlore-user-service:
+    build:
+      context: .
+    container_name: ${CONTAINER_PORT:-invenlore-user-service}
+    hostname: ${CONTAINER_PORT:-invenlore-user-service}
+    networks:
+      - invenlore-user
+    ports:
+      - 80:${CONTAINER_PORT:-8080}
+    environment:
+      - CONTAINER_PORT=${CONTAINER_PORT:-8080}
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+networks:
+  invenlore-user:
+    driver: bridge
