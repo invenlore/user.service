@@ -12,7 +12,7 @@ import (
 )
 
 func MakeGRPCServerAndRun(listenAddr string, svc service.UserService) error {
-	logrus.Info("Starting gRPC server on ", listenAddr)
+	logrus.Info("starting gRPC server on ", listenAddr)
 
 	grpcUserServer := NewGRPCUserServer(svc)
 

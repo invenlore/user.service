@@ -1,0 +1,8 @@
+.vscode
+.cache/
+
+bin
+.editorconfig
+LICENSE
+README.md
+Makefile

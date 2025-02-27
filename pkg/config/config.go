@@ -8,15 +8,15 @@ import (
 )
 
 type config struct {
-	APP_ENV   string `env:"APP_ENV" envDefault:"dev"`
-	GRPC_PORT string `env:"CONTAINER_GRPC_PORT" envDefault:"8080"`
-	JSON_PORT string `env:"CONTAINER_JSON_PORT" envDefault:"8081"`
+	APP_ENV     string `env:"APP_ENV" envDefault:"dev"`
+	GRPC_PORT   string `env:"CONTAINER_GRPC_PORT" envDefault:"8080"`
+	HEALTH_PORT string `env:"CONTAINER_HEALTH_PORT" envDefault:"8081"`
 }
 
 type Config interface {
 	GetAppEnv() string
 	GetGRPCPort() string
-	GetJSONPort() string
+	GetHealthPort() string
 }
 
 var (
@@ -32,15 +32,15 @@ func (c *config) GetGRPCPort() string {
 	return c.GRPC_PORT
 }
 
-func (c *config) GetJSONPort() string {
-	return c.JSON_PORT
+func (c *config) GetHealthPort() string {
+	return c.HEALTH_PORT
 }
 
 func GetConfig() Config {
 	once.Do(func() {
 		cfg, err := env.ParseAs[config]()
 		if err != nil {
-			logrus.Error("Parsing environment variables failed")
+			logrus.Error("parsing environment variables failed")
 
 			instance = nil
 		}

@@ -9,11 +9,11 @@ services:
       - invenlore-user
     ports:
       - ${CONTAINER_GRPC_PORT:-8080}:${CONTAINER_GRPC_PORT:-8080}
-      - ${CONTAINER_JSON_PORT:-8081}:${CONTAINER_JSON_PORT:-8081} 
+      - ${CONTAINER_HEALTH_PORT:-8081}:${CONTAINER_HEALTH_PORT:-8081} 
     environment:
       - APP_ENV=${APP_ENV:-dev}
       - CONTAINER_GRPC_PORT=${CONTAINER_GRPC_PORT:-8080}
-      - CONTAINER_JSON_PORT=${CONTAINER_JSON_PORT:-8081}
+      - CONTAINER_HEALTH_PORT=${CONTAINER_HEALTH_PORT:-8081}
     deploy:
       restart_policy:
         condition: on-failure

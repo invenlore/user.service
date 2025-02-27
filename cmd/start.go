@@ -14,6 +14,6 @@ func Start() {
 
 	go transport.MakeGRPCServerAndRun(":"+cfg.GetGRPCPort(), svc)
 
-	jsonServer := transport.NewJSONAPIServer(":" + cfg.GetJSONPort())
+	jsonServer := transport.NewHealthServer(":" + cfg.GetHealthPort())
 	jsonServer.Run()
 }
