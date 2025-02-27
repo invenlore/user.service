@@ -5,7 +5,7 @@ go 1.24.0
 require google.golang.org/grpc v1.70.0
 
 require (
-	github.com/invenlore/proto v0.1.1 // indirect
+	github.com/invenlore/proto v1.0.0
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect

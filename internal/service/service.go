@@ -1,4 +1,4 @@
-package main
+package service
 
 import (
 	"context"
@@ -8,20 +8,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var user = map[string]string{
+var users = map[string]string{
 	"1": "email@email.com",
 }
 
-// PriceService is an interface that can fetch the price for any given ticker.
 type UserService interface {
 	GetUser(context.Context, string) (string, error)
 }
 
-type userService struct{}
+type UserServiceStruct struct{}
 
-// is the business logic
-func (s *userService) GetUser(_ context.Context, id string) (string, error) {
-	email, ok := user[id]
+func (s *UserServiceStruct) GetUser(_ context.Context, id string) (string, error) {
+	email, ok := users[id]
 	if !ok {
 		return "404", fmt.Errorf("price for ticker (%s) is not available", id)
 	}
@@ -29,11 +27,11 @@ func (s *userService) GetUser(_ context.Context, id string) (string, error) {
 	return email, nil
 }
 
-type loggingService struct {
-	next UserService
+type LoggingService struct {
+	Next UserService
 }
 
-func (s loggingService) GetUser(ctx context.Context, id string) (price string, err error) {
+func (s LoggingService) GetUser(ctx context.Context, id string) (price string, err error) {
 	defer func(begin time.Time) {
 		reqID := ctx.Value("requestID")
 
@@ -45,5 +43,5 @@ func (s loggingService) GetUser(ctx context.Context, id string) (price string, e
 		}).Info("GetUser")
 	}(time.Now())
 
-	return s.next.GetUser(ctx, id)
+	return s.Next.GetUser(ctx, id)
 }

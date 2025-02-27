@@ -1,15 +1,16 @@
-package main
+package server
 
 import (
 	"context"
 	"math/rand"
 	"net"
 
-	"github.com/invenlore/proto"
+	"github.com/invenlore/proto/user/gen/go/user"
+	"github.com/invenlore/user.service/internal/service"
 	"google.golang.org/grpc"
 )
 
-func makeGRPCServerAndRun(listenAddr string, svc proto.UserService) error {
+func MakeGRPCServerAndRun(listenAddr string, svc service.UserService) error {
 	grpcUserFetcher := NewGRPCUserFetcherServer(svc)
 
 	ln, err := net.Listen("tcp", listenAddr)
@@ -19,23 +20,23 @@ func makeGRPCServerAndRun(listenAddr string, svc proto.UserService) error {
 
 	opts := []grpc.ServerOption{}
 	server := grpc.NewServer(opts...)
-	proto.RegisterUserFetcherServer(server, grpcUserFetcher)
+	user.RegisterUserServiceServer(server, grpcUserFetcher)
 
 	return server.Serve(ln)
 }
 
 type GRPCUserFetcherServer struct {
-	svc UserService
-	proto.UnimplementedUserFetcherServer
+	svc service.UserService
+	user.UnimplementedUserServiceServer
 }
 
-func NewGRPCUserFetcherServer(svc UserService) *GRPCUserFetcherServer {
+func NewGRPCUserFetcherServer(svc service.UserService) *GRPCUserFetcherServer {
 	return &GRPCUserFetcherServer{
 		svc: svc,
 	}
 }
 
-func (s *GRPCUserFetcherServer) GetUser(ctx context.Context, req *proto.UserRequest) (*proto.UserResponse, error) {
+func (s *GRPCUserFetcherServer) GetUser(ctx context.Context, req *user.UserRequest) (*user.UserResponse, error) {
 	reqid := rand.Intn(10000)
 	ctx = context.WithValue(ctx, "requestID", reqid)
 
@@ -44,8 +45,8 @@ func (s *GRPCUserFetcherServer) GetUser(ctx context.Context, req *proto.UserRequ
 		return nil, err
 	}
 
-	resp := &proto.PriceResponse{
-		Id: req.Id,
+	resp := &user.UserResponse{
+		Id:    req.Id,
 		Email: email,
 	}
 
