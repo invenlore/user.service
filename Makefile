@@ -22,4 +22,4 @@ fresh:
 logs:
 	docker compose logs -f
 
-.PHONY: compose
+.PHONY: fresh

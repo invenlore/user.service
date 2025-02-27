@@ -18,6 +18,8 @@ func MakeGRPCServerAndRun(listenAddr string, svc service.UserService) error {
 
 	ln, err := net.Listen("tcp", listenAddr)
 	if err != nil {
+		logrus.Errorln(err)
+
 		return err
 	}
 
@@ -25,7 +27,14 @@ func MakeGRPCServerAndRun(listenAddr string, svc service.UserService) error {
 	server := grpc.NewServer(opts...)
 	proto.RegisterUserServiceServer(server, grpcUserServer)
 
-	return server.Serve(ln)
+	err = server.Serve(ln)
+	if err != nil {
+		logrus.Errorln(err)
+
+		return err
+	}
+
+	return err
 }
 
 type GRPCUserServer struct {
