@@ -1,14 +1,21 @@
 # UserService
 
-### Run:
+### Docker:
 ```shell
-make
+# fresh with build
+make fresh
 
-# or
-make compose
+# start
+make up
+
+# down
+make down
+
+# logs
+make logs
 ```
 
-### Or build image:
+### Or just run:
 ```shell
-make build
+make run
 ```
