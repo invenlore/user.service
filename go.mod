@@ -2,10 +2,13 @@ module github.com/invenlore/user.service
 
 go 1.24.0
 
-require google.golang.org/grpc v1.70.0
-require github.com/invenlore/proto v1.0.2
-require github.com/google/uuid v1.6.0
-require github.com/sirupsen/logrus v1.9.3
+require (
+	google.golang.org/grpc v1.70.0
+	github.com/invenlore/proto v1.0.2
+	github.com/google/uuid v1.6.0
+	github.com/sirupsen/logrus v1.9.3
+	github.com/caarlos0/env/v11 v11.3.1
+)
 
 require (
 	golang.org/x/net v0.35.0 // indirect

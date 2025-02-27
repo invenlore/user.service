@@ -1,4 +1,4 @@
-package server
+package transport
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/invenlore/user.service/domain"
+	"github.com/invenlore/user.service/internal/domain"
 	"github.com/invenlore/user.service/internal/service"
 	"github.com/sirupsen/logrus"
 )

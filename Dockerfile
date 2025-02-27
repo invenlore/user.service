@@ -5,13 +5,14 @@ FROM golang:1.24 AS builder
 ARG CGO_ENABLED=0
 WORKDIR /app
 
-COPY go.mod go.sum ./
-RUN go mod download
-
 COPY . ./
-RUN go build -o ./user-service cmd/main.go
+
+RUN go mod download
+RUN go build -o ./bin/service
 
 FROM scratch
 
-COPY --from=builder /app/user-service /user-service
-ENTRYPOINT ["/user-service"]
+WORKDIR /app
+
+COPY --from=builder /app/bin/service ./service
+ENTRYPOINT ["/app/service"]

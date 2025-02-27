@@ -1,11 +1,25 @@
 run:
-	go build -o ./bin/user-service cmd/main.go
+	go build -o ./bin/user-service
 	./bin/user-service
 
-build:
-	docker build --tag user-service .
+up:
+	@if [ ! -f .env ]; then \
+        cp .env.example .env; \
+    fi
+	docker compose up -d
 
-compose:
-	docker compose up --build -d
+down:
+	docker compose down
+
+fresh:
+	@if [ ! -f .env ]; then \
+        cp .env.example .env; \
+    fi
+	docker compose down --remove-orphans
+	docker compose build --no-cache
+	docker compose up -d --build -V
+
+logs:
+	docker compose logs -f
 
 .PHONY: compose
