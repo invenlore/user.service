@@ -9,16 +9,17 @@ import (
 	"github.com/invenlore/user.service/internal/service"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
-func MakeGRPCServerAndRun(listenAddr string, svc service.UserService) error {
+func StartGRPCServer(listenAddr string, svc service.UserService) error {
 	logrus.Info("starting gRPC server on ", listenAddr)
 
 	grpcUserServer := NewGRPCUserServer(svc)
 
 	ln, err := net.Listen("tcp", listenAddr)
 	if err != nil {
-		logrus.Errorln(err)
+		logrus.Fatalln(err)
 
 		return err
 	}
@@ -29,7 +30,7 @@ func MakeGRPCServerAndRun(listenAddr string, svc service.UserService) error {
 
 	err = server.Serve(ln)
 	if err != nil {
-		logrus.Errorln(err)
+		logrus.Fatalln(err)
 
 		return err
 	}
@@ -51,9 +52,9 @@ func NewGRPCUserServer(svc service.UserService) *GRPCUserServer {
 func (s *GRPCUserServer) GetUser(ctx context.Context, req *proto.UserRequest) (*proto.UserResponse, error) {
 	ctx = context.WithValue(ctx, "requestID", uuid.New().String())
 
-	email, err := s.svc.GetUser(ctx, req.Id)
+	email, code, err := s.svc.GetUser(ctx, req.Id)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(code, err.Error())
 	}
 
 	resp := &proto.UserResponse{

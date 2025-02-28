@@ -8,7 +8,7 @@ make fresh
 # start
 make up
 
-# down
+# stop
 make down
 
 # logs

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
 )
 
 // MOCK
@@ -14,25 +15,25 @@ var users = map[string]string{
 }
 
 type UserService interface {
-	GetUser(context.Context, string) (string, error)
+	GetUser(context.Context, string) (string, codes.Code, error)
 }
 
 type UserServiceStruct struct{}
 
-func (s *UserServiceStruct) GetUser(_ context.Context, id string) (string, error) {
+func (s *UserServiceStruct) GetUser(_ context.Context, id string) (string, codes.Code, error) {
 	email, ok := users[id]
 	if !ok {
-		return "404", fmt.Errorf("User for id (%s) is not found", id)
+		return "", codes.NotFound, fmt.Errorf("User for id (%s) is not found", id)
 	}
 
-	return email, nil
+	return email, codes.OK, nil
 }
 
 type LoggingServiceStruct struct {
 	Next UserService
 }
 
-func (s LoggingServiceStruct) GetUser(ctx context.Context, id string) (email string, err error) {
+func (s LoggingServiceStruct) GetUser(ctx context.Context, id string) (email string, code codes.Code, err error) {
 	defer func(begin time.Time) {
 		reqID := ctx.Value("requestID")
 
@@ -40,6 +41,7 @@ func (s LoggingServiceStruct) GetUser(ctx context.Context, id string) (email str
 			"requestID": reqID,
 			"took":      time.Since(begin),
 			"err":       err,
+			"errCode":   code,
 			"userID":    id,
 		}).Info("GetUser")
 	}(time.Now())
