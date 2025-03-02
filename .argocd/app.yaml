@@ -12,7 +12,6 @@ spec:
   - repoURL: https://github.com/invenlore/user.service.git
     targetRevision: master
     path: .argocd/manifests
-
   syncPolicy:
     automated:
       prune: true

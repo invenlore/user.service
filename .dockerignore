@@ -1,5 +1,6 @@
 .vscode
-.cache/
+.cache
+.argocd
 
 bin
 .editorconfig
