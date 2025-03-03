@@ -1,4 +1,4 @@
-name: production image push
+name: production image build
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   push_to_registry:
-    name: push to docker hub
+    name: build and push to docker hub
     runs-on: ubuntu-latest
     permissions:
       packages: write
