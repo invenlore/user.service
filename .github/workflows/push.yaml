@@ -24,14 +24,6 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: invenlore/invenlore-user-service
-          tags: |
-            type=ref,event=branch
-
       - name: setup docker buildx
         uses: docker/setup-buildx-action@v3
 
@@ -43,7 +35,6 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: invenlore/invenlore-user-service:master
-          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=invenlore/invenlore-user-service:master
           cache-to: type=inline
 
