@@ -1,4 +1,4 @@
-name: invenlore-user-service image push
+name: production image push
 
 on:
   push:
@@ -29,6 +29,8 @@ jobs:
         uses: docker/metadata-action@v5.7.0
         with:
           images: invenlore/invenlore-user-service
+          tags: |
+            type=ref,event=branch
 
       - name: build and push
         id: push
