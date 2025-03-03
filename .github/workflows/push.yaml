@@ -39,7 +39,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: invenlore/invenlore-user-service:master
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: artifact attestation
