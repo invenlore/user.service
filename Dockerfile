@@ -5,10 +5,12 @@ FROM golang:1.24 AS builder
 ARG CGO_ENABLED=0
 WORKDIR /app
 
+RUN go env -w GOMODCACHE=/root/.cache/go-build
+
 COPY . ./
 
-RUN go mod download
-RUN go build -o ./bin/service
+RUN --mount=type=cache,target=/root/.cache/go-build go mod download
+RUN --mount=type=cache,target=/root/.cache/go-build go build -o ./bin/service
 
 FROM scratch
 
