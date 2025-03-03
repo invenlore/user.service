@@ -1,9 +1,10 @@
 .vscode
 .cache
 .argocd
+.github
 
 bin
-.editorconfig
 LICENSE
 README.md
 Makefile
+.editorconfig
