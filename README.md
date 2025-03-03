@@ -1,4 +1,5 @@
 # UserService
+[![production image push](https://github.com/invenlore/user.service/actions/workflows/push.yaml/badge.svg)](https://github.com/invenlore/user.service/actions/workflows/push.yaml)
 
 ### Docker:
 ```shell
