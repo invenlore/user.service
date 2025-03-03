@@ -1,7 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: invenlore-user-service
   labels:
     k8s-app: invenlore-user-service
 spec:
