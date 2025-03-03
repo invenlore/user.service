@@ -18,6 +18,7 @@ spec:
       containers:
       - name: invenlore-user-service
         image: invenlore/invenlore-user-service:latest
+        imagePullPolicy: Always
         env:
           - name: APP_ENV
             value: 'prod'
