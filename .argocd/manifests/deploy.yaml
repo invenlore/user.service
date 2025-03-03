@@ -10,7 +10,6 @@ spec:
     matchLabels:
       k8s-app: invenlore-user-service
   template:
-    name: invenlore-user-service
     metadata:
       labels:
         k8s-app: invenlore-user-service
