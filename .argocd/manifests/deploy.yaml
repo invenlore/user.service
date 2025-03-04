@@ -4,6 +4,9 @@ metadata:
   name: invenlore-user-service
   labels:
     k8s-app: invenlore-user-service
+  annotations:
+    keel.sh/policy: force
+    keel.sh/match-tag: "true"
 spec:
   replicas: 2
   selector:
@@ -15,16 +18,22 @@ spec:
         k8s-app: invenlore-user-service
     spec:
       containers:
-      - name: invenlore-user-service
-        image: invenlore/invenlore-user-service:master
-        imagePullPolicy: Always
-        env:
-          - name: APP_ENV
-            value: 'prod'
-          - name: CONTAINER_GRPC_PORT
-            value: '8080'
-          - name: CONTAINER_HEALTH_PORT
-            value: '8081'
-        ports:
-        - containerPort: 8080
-        - containerPort: 8081
+        - name: invenlore-user-service
+          image: invenlore/invenlore-user-service:master
+          imagePullPolicy: Always
+          env:
+            - name: APP_ENV
+              value: 'prod'
+            - name: CONTAINER_GRPC_PORT
+              value: '8080'
+            - name: CONTAINER_HEALTH_PORT
+              value: '8081'
+          ports:
+            - containerPort: 8080
+            - containerPort: 8081
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
