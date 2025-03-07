@@ -13,8 +13,7 @@ spec:
     server: "https://kubernetes.default.svc" 
     namespace: invenlore-services
   sources:
-    - chart: invenlore-user-service
-      repoURL: https://github.com/invenlore/user.service.git
+    - repoURL: https://github.com/invenlore/user.service.git
       targetRevision: master
       path: .helm
       helm:
