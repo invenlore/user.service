@@ -7,4 +7,8 @@ ports:
   grpc: 8080
   health: 8081
 
-env: "prod"
+env:
+  mode: "prod"
+  ports:
+    grpc: "8080"
+    health: "8081"
