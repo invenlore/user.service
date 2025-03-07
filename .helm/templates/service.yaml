@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    k8s-app: {{ .Release.Name }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: grpc
+      protocol: TCP
+      port: {{ .Values.ports.grpc }}
+      targetPort: {{ .Values.ports.grpc }}
+    - name: health
+      protocol: TCP
+      port: {{ .Values.ports.health }}
+      targetPort: {{ .Values.ports.health }}
+  selector:
+    k8s-app: {{ .Release.Name }}

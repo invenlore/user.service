@@ -1,0 +1,10 @@
+container:
+  image: invenlore/invenlore-user-service:dev
+
+replicaCount: 2
+
+ports:
+  grpc: 8080
+  health: 8081
+
+env: "dev"

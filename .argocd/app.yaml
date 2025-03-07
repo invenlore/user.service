@@ -3,18 +3,26 @@ kind: Application
 metadata:
   name: invenlore-user-service
   namespace: argocd
+  annotations:
+    argocd-image-updater.argoproj.io/image-list: invenlore-user-service=invenlore/invenlore-user-service:master
+    argocd-image-updater.argoproj.io/invenlore-user-service.force-update: "true"
+    argocd-image-updater.argoproj.io/invenlore-user-service.update-strategy: digest
 spec:
   project: default
   destination:
     server: "https://kubernetes.default.svc" 
     namespace: invenlore-services
-  sources:
-  - repoURL: https://github.com/invenlore/user.service.git
+  source:
+    chart: invenlore-user-service
+    repoURL: https://github.com/invenlore/user.service.git
     targetRevision: master
-    path: .argocd/manifests
+    path: .helm
+    helm:
+      valueFiles:
+        - values.yaml
   syncPolicy:
     automated:
       prune: true
       selfHeal: true 
     syncOptions:
-    - CreateNamespace=true
+      - CreateNamespace=true

@@ -1,0 +1,36 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    k8s-app: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      k8s-app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        k8s-app: {{ .Release.Name }}
+    spec:
+      containers:
+        - name : {{ .Release.Name }}
+          image: {{ .Values.container.image }}
+          imagePullPolicy: Always
+          env:
+            - name: APP_ENV
+              value: {{ .Values.env }}
+            - name: CONTAINER_GRPC_PORT
+              value: {{ .Values.ports.grpc }}
+            - name: CONTAINER_HEALTH_PORT
+              value: {{ .Values.ports.health }}
+          ports:
+            - containerPort: {{ .Values.ports.grpc }}
+            - containerPort: {{ .Values.ports.health }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.ports.health }}
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
