@@ -12,14 +12,14 @@ spec:
   destination:
     server: "https://kubernetes.default.svc" 
     namespace: invenlore-services
-  source:
-    chart: invenlore-user-service
-    repoURL: https://github.com/invenlore/user.service.git
-    targetRevision: master
-    path: .helm
-    helm:
-      valueFiles:
-        - values.yaml
+  sources:
+    - chart: invenlore-user-service
+      repoURL: https://github.com/invenlore/user.service.git
+      targetRevision: master
+      path: .helm
+      helm:
+        valueFiles:
+          - values.yaml
   syncPolicy:
     automated:
       prune: true
