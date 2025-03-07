@@ -20,7 +20,7 @@ spec:
           imagePullPolicy: Always
           env:
             - name: APP_ENV
-              value: {{ .Values.env }}
+              value: {{ .Values.env | quote }}
             - name: CONTAINER_GRPC_PORT
               value: {{ .Values.ports.grpc }}
             - name: CONTAINER_HEALTH_PORT
