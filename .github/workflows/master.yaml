@@ -33,6 +33,10 @@ jobs:
         with:
           cache-source: go-build-cache
 
+      - name: extract tag
+        id: get_tag
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
       - name: build and push
         id: push
         uses: docker/build-push-action@v6
@@ -40,6 +44,9 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: invenlore/invenlore-user-service:master
+          tags: |
+            invenlore/invenlore-user-service:latest
+            invenlore/invenlore-user-service:master
+            invenlore/invenlore-user-service:${{ steps.get_tag.outputs.TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

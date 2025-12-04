@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name : {{ .Release.Name }}
-          image: {{ .Values.container.image }}
+          image: "{{ .Values.container.image }}:{{ .Values.container.tag }}"
           imagePullPolicy: Always
           env:
             - name: APP_ENV

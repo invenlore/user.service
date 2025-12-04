@@ -4,9 +4,9 @@ metadata:
   name: invenlore-user-service
   namespace: argocd
   annotations:
-    argocd-image-updater.argoproj.io/image-list: invenlore-user-service=invenlore/invenlore-user-service:master
+    argocd-image-updater.argoproj.io/image-list: invenlore-user-service=invenlore/invenlore-user-service
     argocd-image-updater.argoproj.io/invenlore-user-service.force-update: "true"
-    argocd-image-updater.argoproj.io/invenlore-user-service.update-strategy: digest
+    argocd-image-updater.argoproj.io/invenlore-user-service.update-strategy: semver
 spec:
   project: default
   destination:
@@ -21,7 +21,7 @@ spec:
           - values.yaml
   syncPolicy:
     automated:
-      prune: true
-      selfHeal: true 
+      prune: false
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
