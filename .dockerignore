@@ -2,6 +2,7 @@
 .cache
 .argocd
 .github
+.helm
 
 bin
 LICENSE
