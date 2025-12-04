@@ -4,6 +4,10 @@ metadata:
   name: {{ .Release.Name }}
   labels:
     k8s-app: {{ .Release.Name }}
+    app.kubernetes.io/name: "{{ .Release.Name }}"
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    app.kubernetes.io/managed-by: "Helm"
+    app.kubernetes.io/instance: "{{ .Release.Name }}" 
 spec:
   type: ClusterIP
   ports:
