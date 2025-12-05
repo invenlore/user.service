@@ -25,7 +25,7 @@ jobs:
       - name: update image tag in values.yaml
         uses: fjogeleit/yaml-update-action@main
         with:
-          repository: invenlore/user.service
+          repository: invenlore/user.service.delivery
           valueFile: ".helm/values.yaml"
           propertyPath: "container.tag"
           value: "${{ steps.get_tag.outputs.tag }}"
