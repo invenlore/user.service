@@ -17,7 +17,7 @@ import (
 var users = map[string]*user.User{
 	"1": {
 		Id:    "1",
-		Email: "email23998@email.com",
+		Email: "email@email.com",
 	},
 }
 
