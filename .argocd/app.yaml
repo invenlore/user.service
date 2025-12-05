@@ -3,17 +3,13 @@ kind: Application
 metadata:
   name: invenlore-user-service
   namespace: argocd
-  annotations:
-    argocd-image-updater.argoproj.io/image-list: invenlore-user-service=invenlore/invenlore-user-service
-    argocd-image-updater.argoproj.io/invenlore-user-service.force-update: "true"
-    argocd-image-updater.argoproj.io/invenlore-user-service.update-strategy: semver
 spec:
   project: default
   destination:
     name: in-cluster
     namespace: invenlore-services
   sources:
-    - repoURL: https://github.com/invenlore/user.service.git
+    - repoURL: https://github.com/invenlore/user.service.delivery.git
       targetRevision: master
       path: .helm
       helm:

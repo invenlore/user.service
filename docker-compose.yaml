@@ -2,7 +2,7 @@ services:
   user-service:
     build:
       context: .
-    image: invenlore/invenlore-user-service:latest
+    image: invenlore/invenlore-user-service:dev
     container_name: ${CONTAINER_NAME:-invenlore-user-service}
     hostname: ${CONTAINER_NAME:-invenlore-user-service}
     networks:
