@@ -1,6 +1,6 @@
 container:
   image: invenlore/invenlore-user-service
-  tag: v1.1.7
+  tag: v1.1.8
 
 replicaCount: 2
 

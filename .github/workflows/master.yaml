@@ -1,14 +1,13 @@
 name: production image build
 
 on:
-  push:
-    tags:
-      - "v.*"
+  release:
+    types: 
+      - published
 
 jobs:
   push_to_registry:
     name: build and push to docker hub
-    if: ${{ github.base_ref == 'refs/heads/master' }}
     runs-on: ubuntu-latest
     steps:
       - name: get latest tag
