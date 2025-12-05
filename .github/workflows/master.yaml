@@ -5,7 +5,8 @@ on:
     types: 
       - published
 
-permissions: write-all
+permissions:
+  contents: write
 
 jobs:
   update_helm_values:
