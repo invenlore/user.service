@@ -5,6 +5,8 @@ on:
     types: 
       - published
 
+permissions: write-all
+
 jobs:
   update_helm_values:
     name: update helm values on new release
