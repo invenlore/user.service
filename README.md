@@ -1,5 +1,5 @@
 # UserService
-[![production image build](https://github.com/invenlore/user.service.delivery/actions/workflows/master.yaml/badge.svg)](https://github.com/invenlore/user.service.delivery/actions/workflows/master.yaml)
+[![production image build](https://github.com/ivankprod/invenlore.user.service.delivery/actions/workflows/master.yaml/badge.svg)](https://github.com/ivankprod/invenlore.user.service.delivery/actions/workflows/master.yaml)
 
 ### Docker:
 ```shell

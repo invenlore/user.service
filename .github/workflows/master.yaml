@@ -22,16 +22,17 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
         with:
-          repository: invenlore/user.service.delivery
+          repository: ivankprod/invenlore.user.service.delivery
 
-      - name: update image tag in values.yaml
-        uses: fjogeleit/yaml-update-action@main
-        with:
-          repository: invenlore/user.service.delivery
-          valueFile: ".helm/values.yaml"
-          propertyPath: "container.tag"
-          value: "${{ steps.get_tag.outputs.tag }}"
-          commitChange: true
-          message: "ci(release): make release ${{ steps.get_tag.outputs.tag }}"
-          branch: "master"
-          token: ${{ secrets.INVENLORE_CI_TOKEN }}
+      # TODO: Migrate to Teams plan
+      # - name: update image tag in values.yaml
+      #   uses: fjogeleit/yaml-update-action@main
+      #   with:
+      #     repository: ivankprod/invenlore.user.service.delivery
+      #     valueFile: ".helm/values.yaml"
+      #     propertyPath: "container.tag"
+      #     value: "${{ steps.get_tag.outputs.tag }}"
+      #     commitChange: true
+      #     message: "ci(release): make release ${{ steps.get_tag.outputs.tag }}"
+      #     branch: "master"
+      #     token: ${{ secrets.INVENLORE_CI_TOKEN }}
