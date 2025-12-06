@@ -19,12 +19,12 @@ jobs:
           repository: invenlore/user.service
         id: get_tag
 
-      - name: checkout
-        uses: actions/checkout@v4
-        with:
-          repository: ivankprod/invenlore.user.service.delivery
-
       # TODO: Migrate to Teams plan
+      # - name: checkout
+      #   uses: actions/checkout@v4
+      #   with:
+      #     repository: ivankprod/invenlore.user.service.delivery
+
       # - name: update image tag in values.yaml
       #   uses: fjogeleit/yaml-update-action@main
       #   with:
