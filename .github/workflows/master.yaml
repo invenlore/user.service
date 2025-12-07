@@ -55,3 +55,11 @@ jobs:
             invenlore/invenlore-user-service:${{ steps.get_tag.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: dokploy update image
+        uses: jegork/dokploy-update-image-action@0.1.0
+        with:
+          token: ${{ secrets.DOKPLOY_AUTH_TOKEN }}
+          application_id: ${{ secrets.DOKPLOY_APPLICATION_ID }}
+          image: invenlore/invenlore-user-service:${{ steps.get_tag.outputs.tag }}
+          base_url: ${{ secrets.DOKPLOY_URL }}
