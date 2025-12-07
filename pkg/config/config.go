@@ -9,8 +9,8 @@ import (
 
 type config struct {
 	APP_ENV     string `env:"APP_ENV" envDefault:"dev"`
-	GRPC_PORT   string `env:"CONTAINER_GRPC_PORT" envDefault:"8080"`
-	HEALTH_PORT string `env:"CONTAINER_HEALTH_PORT" envDefault:"8081"`
+	GRPC_PORT   string `env:"APP_GRPC_PORT" envDefault:"8081"`
+	HEALTH_PORT string `env:"APP_HEALTH_PORT" envDefault:"8082"`
 }
 
 type Config interface {
