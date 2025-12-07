@@ -2,11 +2,11 @@ services:
   user-service:
     build:
       context: .
-    image: invenlore/invenlore-user-service:dev
+    image: invenlore/invenlore-user-service:master
     container_name: ${CONTAINER_NAME:-invenlore-user-service}
     hostname: ${CONTAINER_NAME:-invenlore-user-service}
     networks:
-      - invenlore-user
+      - dokploy-network
     ports:
       - ${CONTAINER_GRPC_PORT:-8080}:${CONTAINER_GRPC_PORT:-8080}
       - ${CONTAINER_HEALTH_PORT:-8081}:${CONTAINER_HEALTH_PORT:-8081} 
@@ -19,5 +19,5 @@ services:
         condition: on-failure
 
 networks:
-  invenlore-user:
-    driver: bridge
+  dokploy-network:
+    external: true
