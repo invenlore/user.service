@@ -26,7 +26,7 @@ jobs:
         uses: fjogeleit/yaml-update-action@main
         with:
           repository: invenlore/user.service
-          valueFile: "./docker-compose.yaml"
+          valueFile: "docker-compose.yaml"
           propertyPath: "services.user-service.image"
           value: "invenlore/invenlore-user-service:${{ steps.get_tag.outputs.tag }}"
           commitChange: true
