@@ -3,7 +3,6 @@ services:
     build:
       context: .
     image: invenlore/invenlore-user-service:master
-    container_name: ${CONTAINER_NAME:-invenlore-user-service}
     hostname: ${CONTAINER_NAME:-invenlore-user-service}
     networks:
       - dokploy-network
