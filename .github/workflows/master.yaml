@@ -22,18 +22,6 @@ jobs:
           repository: invenlore/user.service
           ref: ${{ steps.get_tag.outputs.tag }}
 
-      - name: update image tag in docker-compose.yaml
-        uses: fjogeleit/yaml-update-action@main
-        with:
-          repository: invenlore/user.service
-          valueFile: "docker-compose.yaml"
-          propertyPath: "services.user-service.image"
-          value: "invenlore/invenlore-user-service:${{ steps.get_tag.outputs.tag }}"
-          commitChange: true
-          message: "ci(release): make release ${{ steps.get_tag.outputs.tag }}"
-          branch: "master"
-          token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: login to docker hub
         uses: docker/login-action@v3
         with:
