@@ -63,3 +63,10 @@ jobs:
           application_id: ${{ secrets.DOKPLOY_APPLICATION_ID }}
           image: invenlore/invenlore-user-service:${{ steps.get_tag.outputs.tag }}
           base_url: ${{ secrets.DOKPLOY_URL }}
+
+      - name: dokploy deployment
+        uses: benbristow/dokploy-deploy-action@0.0.1
+        with:
+          auth_token: ${{ secrets.DOKPLOY_AUTH_TOKEN }}
+          application_id: ${{ secrets.DOKPLOY_APPLICATION_ID }}
+          dokploy_url: ${{ secrets.DOKPLOY_URL }}
