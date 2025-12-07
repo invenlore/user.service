@@ -1,5 +1,5 @@
 # UserService
-[![production image build](https://github.com/invenlore/user.service/actions/workflows/master.yaml/badge.svg)](https://github.com/invenlore/user.service/actions/workflows/master.yaml)
+![Docker Image Version (tag)](https://img.shields.io/docker/v/invenlore/invenlore-user-service/master)
 
 ### Docker:
 ```shell
