@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"net"
 	"net/http"
 
 	"github.com/invenlore/user.service/pkg/health"
@@ -21,5 +22,11 @@ func (s *HealthServer) Run() {
 	logrus.Info("starting health server on ", s.listenAddr)
 
 	http.Handle("/health", health.GetHealthHandler())
-	logrus.Fatalln(http.ListenAndServe(s.listenAddr, nil))
+
+	ln, err := net.Listen("tcp6", s.listenAddr)
+	if err != nil {
+		logrus.Fatalln(err)
+	}
+
+	logrus.Fatalln(http.Serve(ln, nil))
 }
