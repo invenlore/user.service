@@ -17,4 +17,7 @@ FROM scratch
 WORKDIR /app
 
 COPY --from=builder /app/bin/service ./service
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -f http://localhost/health || exit 1
+
 ENTRYPOINT ["/app/service"]
