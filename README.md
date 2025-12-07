@@ -1,6 +1,4 @@
 # UserService
-![Docker Image Version (tag)](https://img.shields.io/docker/v/invenlore/invenlore-user-service/master)
-
 ### Docker:
 ```shell
 # fresh with build
