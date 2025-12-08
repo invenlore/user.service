@@ -18,7 +18,7 @@ WORKDIR /app
 
 COPY --from=builder /app/bin/service ./service
 
-COPY --from=ghcr.io/tarampampam/microcheck:1 /bin/httpcheck /bin/httpcheck
-HEALTHCHECK --interval=1m --timeout=5s CMD ["httpcheck", "http://localhost/health"]
+#COPY --from=ghcr.io/tarampampam/microcheck:1 /bin/httpcheck /bin/httpcheck
+#HEALTHCHECK --interval=1m --timeout=5s CMD ["httpcheck", "http://localhost/health"]
 
 ENTRYPOINT ["/app/service"]
