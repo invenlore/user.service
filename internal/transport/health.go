@@ -22,12 +22,5 @@ func (s *HealthServer) Run() {
 
 	http.Handle("/health", health.GetHealthHandler())
 
-	/* ln, err := net.Listen("tcp6", s.listenAddr)
-	if err != nil {
-		logrus.Fatalln(err)
-	}
-
-	logrus.Fatalln(http.Serve(ln, nil)) */
-
 	logrus.Fatalln(http.ListenAndServe(s.listenAddr, nil))
 }
