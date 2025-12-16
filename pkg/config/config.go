@@ -8,17 +8,13 @@ import (
 )
 
 type config struct {
-	APP_ENV     string `env:"APP_ENV" envDefault:"dev"`
-	APP_HOST    string `env:"APP_HOST" envDefault:""`
-	GRPC_PORT   string `env:"APP_GRPC_PORT" envDefault:"8081"`
-	HEALTH_PORT string `env:"APP_HEALTH_PORT" envDefault:"8082"`
+	APP_ENV  string `env:"APP_ENV" envDefault:"dev"`
+	APP_HOST string `env:"APP_HOST" envDefault:""`
 }
 
 type Config interface {
 	GetAppEnv() string
 	GetAppHost() string
-	GetGRPCPort() string
-	GetHealthPort() string
 }
 
 var (
@@ -32,14 +28,6 @@ func (c *config) GetAppEnv() string {
 
 func (c *config) GetAppHost() string {
 	return c.APP_HOST
-}
-
-func (c *config) GetGRPCPort() string {
-	return c.GRPC_PORT
-}
-
-func (c *config) GetHealthPort() string {
-	return c.HEALTH_PORT
 }
 
 func GetConfig() Config {

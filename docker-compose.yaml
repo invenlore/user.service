@@ -3,21 +3,19 @@ services:
     build:
       context: .
     image: invenlore/invenlore-user-service:master
-    container_name: ${CONTAINER_NAME:-invenlore-user-service}
-    hostname: ${CONTAINER_NAME:-invenlore-user-service}
+    container_name: invenlore-user-service
+    hostname: invenlore-user-service
     networks:
-      - dokploy-network
+      - invenlore-network
     ports:
-      - ${CONTAINER_GRPC_PORT:-8081}:${CONTAINER_GRPC_PORT:-8081}
-      - ${CONTAINER_HEALTH_PORT:-8082}:${CONTAINER_HEALTH_PORT:-8082} 
+      - 80:80
+      - 8081:8081
     environment:
       - APP_ENV=${APP_ENV:-dev}
-      - APP_GRPC_PORT=${CONTAINER_GRPC_PORT:-8081}
-      - APP_HEALTH_PORT=${CONTAINER_HEALTH_PORT:-8082}
     deploy:
       restart_policy:
         condition: on-failure
 
 networks:
-  dokploy-network:
+  invenlore-network:
     external: true

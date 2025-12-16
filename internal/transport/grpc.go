@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"github.com/google/uuid"
-	user "github.com/invenlore/proto/proto/user"
+	"github.com/invenlore/proto/pkg/user"
 	"github.com/invenlore/user.service/internal/service"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"

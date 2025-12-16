@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	user "github.com/invenlore/proto/proto/user"
+	"github.com/invenlore/proto/pkg/user"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 )

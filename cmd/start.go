@@ -12,8 +12,8 @@ func Start() {
 		cfg = config.GetConfig()
 	)
 
-	go transport.StartGRPCServer(cfg.GetAppHost()+":"+cfg.GetGRPCPort(), svc)
+	go transport.StartGRPCServer(cfg.GetAppHost()+":8081", svc)
 
-	healthServer := transport.NewHealthServer(cfg.GetAppHost() + ":" + cfg.GetHealthPort())
+	healthServer := transport.NewHealthServer(cfg.GetAppHost() + ":80")
 	healthServer.Run()
 }
