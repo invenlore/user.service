@@ -21,7 +21,7 @@ var (
 		},
 	}
 
-	mutex sync.RWMutex
+	mu sync.RWMutex
 )
 
 type UserService interface {
@@ -33,9 +33,9 @@ type UserService interface {
 
 type UserServiceStruct struct{}
 
-func (s *UserServiceStruct) AddUser(_ context.Context) (*user.User, codes.Code, error) {
-	mutex.Lock()
-	defer mutex.Unlock()
+func (s *UserServiceStruct) AddUser(ctx context.Context) (*user.User, codes.Code, error) {
+	mu.Lock()
+	defer mu.Unlock()
 
 	newId := uuid.NewString()
 
@@ -47,9 +47,9 @@ func (s *UserServiceStruct) AddUser(_ context.Context) (*user.User, codes.Code, 
 	return users[newId], codes.OK, nil
 }
 
-func (s *UserServiceStruct) GetUser(_ context.Context, id string) (*user.User, codes.Code, error) {
-	mutex.RLock()
-	defer mutex.RUnlock()
+func (s *UserServiceStruct) GetUser(ctx context.Context, id string) (*user.User, codes.Code, error) {
+	mu.RLock()
+	defer mu.RUnlock()
 
 	ptrUser, ok := users[id]
 	if !ok {
@@ -59,23 +59,22 @@ func (s *UserServiceStruct) GetUser(_ context.Context, id string) (*user.User, c
 	return ptrUser, codes.OK, nil
 }
 
-func (s *UserServiceStruct) DeleteUser(_ context.Context, id string) (codes.Code, error) {
-	mutex.Lock()
-	defer mutex.Unlock()
+func (s *UserServiceStruct) DeleteUser(ctx context.Context, id string) (codes.Code, error) {
+	mu.Lock()
+	defer mu.Unlock()
 
 	if _, ok := users[id]; ok {
 		delete(users, id)
 
 		return codes.OK, nil
-
 	}
 
 	return codes.NotFound, fmt.Errorf("user for id (%s) is not found", id)
 }
 
-func (s *UserServiceStruct) ListUsers(_ context.Context) ([]*user.User, codes.Code, error) {
-	mutex.RLock()
-	defer mutex.RUnlock()
+func (s *UserServiceStruct) ListUsers(ctx context.Context) ([]*user.User, codes.Code, error) {
+	mu.RLock()
+	defer mu.RUnlock()
 
 	return slices.Collect(maps.Values(users)), codes.OK, nil
 }

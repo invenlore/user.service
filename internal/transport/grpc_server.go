@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/invenlore/core/pkg/config"
+	"github.com/invenlore/core/pkg/logger"
 	"github.com/invenlore/proto/pkg/user"
 	"github.com/invenlore/user.service/internal/service"
 	"github.com/sirupsen/logrus"
@@ -21,6 +23,12 @@ func NewGRPCUserServer(svc service.UserService) *GRPCUserServer {
 	return &GRPCUserServer{
 		svc: svc,
 	}
+}
+
+func (s *GRPCUserServer) HealthCheck(ctx context.Context, req *user.HealthRequest) (*user.HealthResponse, error) {
+	resp := &user.HealthResponse{Status: "up"}
+
+	return resp, nil
 }
 
 func (s *GRPCUserServer) AddUser(ctx context.Context, req *user.AddUserRequest) (*user.AddUserResponse, error) {
@@ -72,24 +80,25 @@ func (s *GRPCUserServer) ListUsers(req *user.ListUsersRequest, srv grpc.ServerSt
 	return err
 }
 
-func StartGRPCServer(listenAddr string, svc service.UserService, errChan chan error) (*grpc.Server, error) {
+func StartGRPCServer(ctx context.Context, cfg *config.ServerConfig, svc service.UserService, errChan chan error) (*grpc.Server, net.Listener, error) {
+	listenAddr := net.JoinHostPort(cfg.GRPC.Host, cfg.GRPC.Port)
 	logrus.Info("starting gRPC server on ", listenAddr)
 
 	ln, err := net.Listen("tcp", listenAddr)
 	if err != nil {
-		return nil, fmt.Errorf("gRPC server failed to listen on %s: %w", listenAddr, err)
+		return nil, nil, fmt.Errorf("gRPC server failed to listen on %s: %w", listenAddr, err)
 	}
 
 	grpcUserServer := NewGRPCUserServer(svc)
 
 	unaryInterceptors := []grpc.UnaryServerInterceptor{
-		RequestIDInterceptor,
-		LoggingInterceptor,
+		logger.ServerRequestIDInterceptor,
+		logger.ServerLoggingInterceptor,
 	}
 
 	streamInterceptors := []grpc.StreamServerInterceptor{
-		StreamRequestIDInterceptor,
-		StreamLoggingInterceptor,
+		logger.ServerStreamRequestIDInterceptor,
+		logger.ServerStreamLoggingInterceptor,
 	}
 
 	server := grpc.NewServer(
@@ -100,12 +109,12 @@ func StartGRPCServer(listenAddr string, svc service.UserService, errChan chan er
 	user.RegisterUserServiceServer(server, grpcUserServer)
 
 	go func() {
-		logrus.Printf("gRPC server serving on %s", listenAddr)
+		logrus.Infof("gRPC server serving on %s", listenAddr)
 
 		if serveErr := server.Serve(ln); serveErr != nil && serveErr != grpc.ErrServerStopped {
 			errChan <- fmt.Errorf("gRPC server failed to serve: %w", serveErr)
 		}
 	}()
 
-	return server, nil
+	return server, ln, nil
 }

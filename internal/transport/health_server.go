@@ -1,15 +1,18 @@
 package transport
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
 
-	"github.com/invenlore/user.service/pkg/health"
+	"github.com/invenlore/core/pkg/config"
+	"github.com/invenlore/core/pkg/health"
 	"github.com/sirupsen/logrus"
 )
 
-func StartHealthServer(listenAddr string, errChan chan error) (*http.Server, net.Listener, error) {
+func StartHealthServer(_ context.Context, cfg *config.ServerConfig, errChan chan error) (*http.Server, net.Listener, error) {
+	listenAddr := net.JoinHostPort(cfg.Health.Host, cfg.Health.Port)
 	logrus.Info("starting health server on ", listenAddr)
 
 	ln, err := net.Listen("tcp", listenAddr)
@@ -21,12 +24,16 @@ func StartHealthServer(listenAddr string, errChan chan error) (*http.Server, net
 	mux.Handle("/health", health.GetHealthHandler())
 
 	server := &http.Server{
-		Addr:    listenAddr,
-		Handler: mux,
+		Addr:              listenAddr,
+		Handler:           mux,
+		ReadTimeout:       cfg.HTTP.ReadTimeout,
+		WriteTimeout:      cfg.HTTP.WriteTimeout,
+		IdleTimeout:       cfg.HTTP.IdleTimeout,
+		ReadHeaderTimeout: cfg.HTTP.ReadHeaderTimeout,
 	}
 
 	go func() {
-		logrus.Printf("health server serving on %s", listenAddr)
+		logrus.Infof("health server serving on %s", listenAddr)
 
 		if serveErr := server.Serve(ln); serveErr != nil && serveErr != http.ErrServerClosed {
 			errChan <- fmt.Errorf("health server failed to serve: %w", serveErr)

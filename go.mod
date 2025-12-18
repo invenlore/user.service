@@ -3,15 +3,16 @@ module github.com/invenlore/user.service
 go 1.24.0
 
 require (
-	github.com/alexliesenfeld/health v0.8.1
-	github.com/caarlos0/env/v11 v11.3.1
 	github.com/google/uuid v1.6.0
-	github.com/invenlore/proto v1.3.1
+	github.com/invenlore/core v0.0.2
+	github.com/invenlore/proto v1.3.2
 	github.com/sirupsen/logrus v1.9.3
 	google.golang.org/grpc v1.77.0
 )
 
 require (
+	github.com/alexliesenfeld/health v0.8.1 // indirect
+	github.com/caarlos0/env/v11 v11.3.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
 	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect

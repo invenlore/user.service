@@ -10,38 +10,55 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/invenlore/core/pkg/config"
 	"github.com/invenlore/user.service/internal/service"
 	"github.com/invenlore/user.service/internal/transport"
-	"github.com/invenlore/user.service/pkg/config"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
 func Start() {
 	var (
-		cfg = config.GetConfig()
-
 		svc = &service.UserServiceStruct{}
 
 		errChan  = make(chan error, 2)
 		stopChan = make(chan os.Signal, 1)
 
 		grpcServer           *grpc.Server = nil
+		grpcServerListener   net.Listener = nil
 		healthServer         *http.Server = nil
 		healthServerListener net.Listener = nil
 
 		serviceErr error = nil
 	)
 
-	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
 	logrus.Info("service starting...")
+
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		logrus.Fatalf("failed to load service configuration: %v", err)
+	}
+
+	if cfg.AppEnv == "dev" {
+		logrus.SetLevel(logrus.TraceLevel)
+	} else {
+		logrus.SetLevel(logrus.InfoLevel)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
 	go func() {
 		var err error
 
-		grpcServer, err = transport.StartGRPCServer(cfg.GetAppHost()+":8081", svc, errChan)
+		grpcServer, grpcServerListener, err = transport.StartGRPCServer(ctx, cfg, svc, errChan)
 		if err != nil {
+			if grpcServerListener != nil {
+				grpcServerListener.Close()
+			}
+
 			errChan <- fmt.Errorf("gRPC server failed to start: %w", err)
 		}
 	}()
@@ -49,7 +66,7 @@ func Start() {
 	go func() {
 		var err error
 
-		healthServer, healthServerListener, err = transport.StartHealthServer(cfg.GetAppHost()+":80", errChan)
+		healthServer, healthServerListener, err = transport.StartHealthServer(ctx, cfg, errChan)
 		if err != nil {
 			if healthServerListener != nil {
 				healthServerListener.Close()
@@ -89,6 +106,11 @@ func Start() {
 		if grpcServer != nil {
 			logrus.Info("stopping gRPC server...")
 			grpcServer.GracefulStop()
+
+			if grpcServerListener != nil {
+				grpcServerListener.Close()
+			}
+
 			logrus.Info("gRPC server stopped gracefully")
 		} else {
 			logrus.Info("gRPC server was not started")
