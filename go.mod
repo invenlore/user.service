@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/google/uuid v1.6.0
 	github.com/invenlore/core v0.0.2
-	github.com/invenlore/proto v1.3.2
+	github.com/invenlore/proto v1.3.6
 	github.com/sirupsen/logrus v1.9.3
 	google.golang.org/grpc v1.77.0
 )
