@@ -12,6 +12,7 @@ services:
       - 8081:8081
     environment:
       - APP_ENV=${APP_ENV:-dev}
+      - USER_SERVICE_ENDPOINT=invenlore-user-service:8081
     deploy:
       restart_policy:
         condition: on-failure
