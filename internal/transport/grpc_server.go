@@ -26,7 +26,7 @@ func NewGRPCUserServer(svc service.UserService) *GRPCUserServer {
 
 func StartGRPCServer(
 	ctx context.Context,
-	cfg *config.AppConfig,
+	cfg *config.GRPCServerConfig,
 	svc service.UserService,
 	errChan chan error,
 ) (
@@ -34,7 +34,7 @@ func StartGRPCServer(
 	net.Listener,
 	error,
 ) {
-	listenAddr := net.JoinHostPort(cfg.GRPC.Host, cfg.GRPC.Port)
+	listenAddr := net.JoinHostPort(cfg.Host, cfg.Port)
 	logrus.Info("starting gRPC server on ", listenAddr)
 
 	ln, err := net.Listen("tcp", listenAddr)

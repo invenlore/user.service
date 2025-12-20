@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/invenlore/core/pkg/config"
+	"github.com/invenlore/core/pkg/db"
+	"github.com/invenlore/user.service/internal/repository"
 	"github.com/invenlore/user.service/internal/service"
 	"github.com/invenlore/user.service/internal/transport"
 	"github.com/sirupsen/logrus"
@@ -19,8 +21,6 @@ import (
 
 func Start() {
 	var (
-		svc = &service.UserServiceStruct{}
-
 		errChan  = make(chan error, 2)
 		stopChan = make(chan os.Signal, 1)
 
@@ -34,7 +34,7 @@ func Start() {
 
 	logrus.Info("service starting...")
 
-	cfg, err := config.LoadConfig()
+	cfg, err := config.Config()
 	if err != nil {
 		logrus.Fatalf("failed to load service configuration: %v", err)
 	}
@@ -42,12 +42,16 @@ func Start() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	db := db.MongoDBConnect(cfg.GetMongoConfig())
+	repo := repository.NewUserRepository(db, cfg.GetMongoConfig())
+	svc := service.NewUserService(repo)
+
 	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
 	go func() {
 		var err error
 
-		grpcServer, grpcServerListener, err = transport.StartGRPCServer(ctx, cfg, svc, errChan)
+		grpcServer, grpcServerListener, err = transport.StartGRPCServer(ctx, cfg.GetGRPCConfig(), svc, errChan)
 		if err != nil {
 			if grpcServerListener != nil {
 				grpcServerListener.Close()
@@ -60,7 +64,7 @@ func Start() {
 	go func() {
 		var err error
 
-		healthServer, healthServerListener, err = transport.StartHealthServer(ctx, cfg, errChan)
+		healthServer, healthServerListener, err = transport.StartHealthServer(ctx, cfg.GetConfig(), errChan)
 		if err != nil {
 			if healthServerListener != nil {
 				healthServerListener.Close()
@@ -81,6 +85,19 @@ func Start() {
 
 	defer func() {
 		logrus.Debug("attempting service graceful shutdown...")
+
+		if db != nil {
+			logrus.Info("closing MongoDB connection...")
+
+			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			if err := db.Disconnect(stopCtx); err != nil {
+				logrus.Errorf("MongoDB connection closing error: %v", err)
+			} else {
+				logrus.Info("MongoDB connection closed gracefully")
+			}
+		}
 
 		if healthServer != nil {
 			logrus.Info("stopping health server...")

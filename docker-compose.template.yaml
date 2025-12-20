@@ -15,6 +15,9 @@ services:
       - APP_LOG_LEVEL=DEBUG
       - GRPC_PORT=8080
       - HEALTH_PORT=80
+      - MONGO_URI=mongodb://user:password@ip:port
+      - MONGO_DATABASE_NAME=invenlore-user-service-db
+      - MONGO_OPERATION_TIMEOUT=10s
     deploy:
       restart_policy:
         condition: on-failure

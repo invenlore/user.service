@@ -27,13 +27,13 @@ func (s *GRPCUserServer) AddUser(
 	*user.AddUserResponse,
 	error,
 ) {
-	ptrUser, code, err := s.svc.AddUser(ctx)
+	lastInsertId, code, err := s.svc.AddUser(ctx, req.User)
 	if err != nil {
 		return nil, status.Error(code, err.Error())
 	}
 
-	resp := &user.AddUserResponse{User: ptrUser}
-	return resp, err
+	resp := &user.AddUserResponse{Id: lastInsertId}
+	return resp, nil
 }
 
 func (s *GRPCUserServer) GetUser(
@@ -49,7 +49,7 @@ func (s *GRPCUserServer) GetUser(
 	}
 
 	resp := &user.GetUserResponse{User: ptrUser}
-	return resp, err
+	return resp, nil
 }
 
 func (s *GRPCUserServer) DeleteUser(
@@ -65,7 +65,7 @@ func (s *GRPCUserServer) DeleteUser(
 	}
 
 	resp := &user.DeleteUserResponse{}
-	return resp, err
+	return resp, nil
 }
 
 func (s *GRPCUserServer) ListUsers(
@@ -87,5 +87,5 @@ func (s *GRPCUserServer) ListUsers(
 		}
 	}
 
-	return err
+	return nil
 }
