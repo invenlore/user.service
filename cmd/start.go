@@ -2,13 +2,16 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
 
 	"github.com/invenlore/core/pkg/config"
 	"github.com/invenlore/core/pkg/db"
@@ -16,121 +19,95 @@ import (
 	"github.com/invenlore/user.service/internal/service"
 	"github.com/invenlore/user.service/internal/transport"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
 )
 
 func Start() {
-	var (
-		errChan  = make(chan error, 2)
-		stopChan = make(chan os.Signal, 1)
-
-		grpcServer           *grpc.Server = nil
-		grpcServerListener   net.Listener = nil
-		healthServer         *http.Server = nil
-		healthServerListener net.Listener = nil
-
-		serviceErr error = nil
-	)
-
-	logrus.Info("service starting...")
+	loggerEntry := logrus.WithField("scope", "service")
+	loggerEntry.Info("service starting...")
 
 	cfg, err := config.Config()
 	if err != nil {
-		logrus.Fatalf("failed to load service configuration: %v", err)
+		loggerEntry.Fatalf("failed to load configuration: %v", err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	appCfg := cfg.GetConfig()
 
-	db := db.MongoDBConnect(cfg.GetMongoConfig())
-	repo := repository.NewUserRepository(db, cfg.GetMongoConfig())
+	baseCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
+
+	g, ctx := errgroup.WithContext(baseCtx)
+
+	mongoClient, err := db.MongoDBConnect(ctx, appCfg.GetMongoConfig())
+	if err != nil {
+		loggerEntry.Fatalf("MongoDB connect failed: %v", err)
+	}
+
+	loggerEntry.Info("MongoDB connected successfully")
+
+	g.Go(func() error {
+		<-ctx.Done()
+
+		stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		return mongoClient.Disconnect(stopCtx)
+	})
+
+	repo := repository.NewUserRepository(mongoClient, appCfg.GetMongoConfig())
 	svc := service.NewUserService(repo)
 
-	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
-	go func() {
-		var err error
-
-		grpcServer, grpcServerListener, err = transport.StartGRPCServer(ctx, cfg.GetGRPCConfig(), svc, errChan)
-		if err != nil {
-			if grpcServerListener != nil {
-				grpcServerListener.Close()
-			}
-
-			errChan <- fmt.Errorf("gRPC server failed to start: %w", err)
-		}
-	}()
-
-	go func() {
-		var err error
-
-		healthServer, healthServerListener, err = transport.StartHealthServer(ctx, cfg.GetConfig(), errChan)
-		if err != nil {
-			if healthServerListener != nil {
-				healthServerListener.Close()
-			}
-
-			errChan <- fmt.Errorf("health server failed to start: %w", err)
-		}
-	}()
-
-	select {
-	case err := <-errChan:
-		serviceErr = err
-		logrus.Errorf("service startup error: %v", serviceErr)
-
-	case <-stopChan:
-		logrus.Debug("received stop signal")
+	grpcSrv, grpcLn, err := transport.NewGRPCServer(appCfg.GetGRPCConfig(), svc, mongoClient)
+	if err != nil {
+		loggerEntry.Fatalf("gRPC server init failed: %v", err)
 	}
 
-	defer func() {
-		logrus.Debug("attempting service graceful shutdown...")
+	healthSrv, healthLn, err := transport.NewHealthServer(appCfg, mongoClient)
+	if err != nil {
+		_ = grpcLn.Close()
 
-		if db != nil {
-			logrus.Info("closing MongoDB connection...")
+		loggerEntry.Fatalf("health server init failed: %v", err)
+	}
 
-			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
+	g.Go(func() error {
+		loggerEntry.Infof("gRPC server serving on %s...", grpcLn.Addr().String())
 
-			if err := db.Disconnect(stopCtx); err != nil {
-				logrus.Errorf("MongoDB connection closing error: %v", err)
-			} else {
-				logrus.Info("MongoDB connection closed gracefully")
-			}
+		if err := grpcSrv.Serve(grpcLn); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+			return fmt.Errorf("gRPC serve failed: %w", err)
 		}
 
-		if healthServer != nil {
-			logrus.Info("stopping health server...")
+		return nil
+	})
 
-			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
+	g.Go(func() error {
+		loggerEntry.Infof("health server serving on %s...", healthSrv.Addr)
 
-			if err := healthServer.Shutdown(stopCtx); err != nil {
-				logrus.Errorf("health server shutdown error: %v", err)
-			} else {
-				logrus.Info("health server stopped gracefully")
-			}
-		} else {
-			logrus.Warn("health server was not started")
+		if err := healthSrv.Serve(healthLn); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return fmt.Errorf("health serve failed: %w", err)
 		}
 
-		if grpcServer != nil {
-			logrus.Info("stopping gRPC server...")
-			grpcServer.GracefulStop()
+		return nil
+	})
 
-			if grpcServerListener != nil {
-				grpcServerListener.Close()
-			}
+	g.Go(func() error {
+		<-ctx.Done()
 
-			logrus.Info("gRPC server stopped gracefully")
-		} else {
-			logrus.Warn("gRPC server was not started")
-		}
+		loggerEntry.Trace("attempting graceful shutdown...")
 
-		logrus.Info("clean service shutdown complete")
+		stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
 
-		if serviceErr != nil {
-			os.Exit(1)
-		}
-	}()
+		grpcSrv.GracefulStop()
+		_ = healthSrv.Shutdown(stopCtx)
+
+		loggerEntry.Info("clean service shutdown complete")
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		loggerEntry.Errorf("service stopped with error: %v", err)
+
+		os.Exit(1)
+	}
+
+	loggerEntry.Info("service stopped gracefully")
 }

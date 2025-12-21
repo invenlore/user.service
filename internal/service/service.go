@@ -20,17 +20,17 @@ type UserService interface {
 	AddUser(context.Context, *user.User) (string, codes.Code, error)
 	GetUser(context.Context, string) (*user.User, codes.Code, error)
 	DeleteUser(context.Context, string) (codes.Code, error)
-	ListUsers(context.Context) ([]*user.User, codes.Code, error)
+	StreamUsers(ctx context.Context, send func(*user.User) error) (codes.Code, error)
 }
 
 func NewUserService(repository repository.UserRepository) UserService {
 	return &userService{Repository: repository}
 }
 
-func (s *userService) AddUser(ctx context.Context, user *user.User) (string, codes.Code, error) {
+func (s *userService) AddUser(ctx context.Context, u *user.User) (string, codes.Code, error) {
 	lastInsertId, err := s.Repository.Insert(ctx, &domain.User{
-		Name:  user.Name,
-		Email: user.Email,
+		Name:  u.Name,
+		Email: u.Email,
 	})
 
 	if err != nil {
@@ -47,6 +47,7 @@ func (s *userService) GetUser(ctx context.Context, id string) (*user.User, codes
 	}
 
 	ptrUser, err := s.Repository.FindOne(ctx, objID)
+
 	if err != nil {
 		switch err {
 		case mongo.ErrNoDocuments:
@@ -58,6 +59,7 @@ func (s *userService) GetUser(ctx context.Context, id string) (*user.User, codes
 
 	return &user.User{
 		Id:    ptrUser.Id.Hex(),
+		Name:  ptrUser.Name,
 		Email: ptrUser.Email,
 	}, codes.OK, nil
 }
@@ -80,20 +82,19 @@ func (s *userService) DeleteUser(ctx context.Context, id string) (codes.Code, er
 	return codes.OK, nil
 }
 
-func (s *userService) ListUsers(ctx context.Context) ([]*user.User, codes.Code, error) {
-	var result []*user.User
-
-	ptrsUsers, err := s.Repository.FindAll(ctx)
-	if err != nil {
-		return nil, codes.Internal, err
-	}
-
-	for _, ptrUser := range ptrsUsers {
-		result = append(result, &user.User{
-			Id:    ptrUser.Id.Hex(),
-			Email: ptrUser.Email,
+func (s *userService) StreamUsers(ctx context.Context, send func(*user.User) error) (codes.Code, error) {
+	err := s.Repository.StreamAll(ctx, func(u *domain.User) error {
+		return send(&user.User{
+			Id:    u.Id.Hex(),
+			Name:  u.Name,
+			Email: u.Email,
 		})
+	})
+
+	if err != nil {
+		// TODO: Check for mongo/stream error - context cancel
+		return codes.Internal, err
 	}
 
-	return result, codes.OK, nil
+	return codes.OK, nil
 }

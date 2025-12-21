@@ -5,31 +5,48 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/invenlore/core/pkg/config"
 	"github.com/invenlore/core/pkg/health"
 	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-func StartHealthServer(
-	_ context.Context,
+func NewHealthServer(
 	cfg *config.AppConfig,
-	errChan chan error,
-) (
-	*http.Server,
-	net.Listener,
-	error,
-) {
-	listenAddr := net.JoinHostPort(cfg.Health.Host, cfg.Health.Port)
-	logrus.Info("starting health server on ", listenAddr)
+	mongoClient *mongo.Client,
+) (*http.Server, net.Listener, error) {
+	var (
+		loggerEntry = logrus.WithField("scope", "health")
+		listenAddr  = net.JoinHostPort(cfg.Health.Host, cfg.Health.Port)
+	)
+
+	loggerEntry.Info("starting health server...")
 
 	ln, err := net.Listen("tcp", listenAddr)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to listen on %s: %w", listenAddr, err)
 	}
 
+	base := health.GetHealthHandler()
+
 	mux := http.NewServeMux()
-	mux.Handle("/health", health.GetHealthHandler())
+	mux.Handle("GET /health", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pingCtx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+
+		if err := mongoClient.Ping(pingCtx, readpref.Primary()); err != nil {
+			loggerEntry.Errorf("MongoDB ping failed: %v", err)
+			http.Error(w, "MongoDB unavailable", http.StatusServiceUnavailable)
+
+			return
+		}
+
+		loggerEntry.Debug("healthcheck: MongoDB available")
+		base.ServeHTTP(w, r)
+	}))
 
 	server := &http.Server{
 		Addr:              listenAddr,
@@ -39,14 +56,6 @@ func StartHealthServer(
 		IdleTimeout:       cfg.HTTP.IdleTimeout,
 		ReadHeaderTimeout: cfg.HTTP.ReadHeaderTimeout,
 	}
-
-	go func() {
-		logrus.Infof("health server serving on %s", listenAddr)
-
-		if serveErr := server.Serve(ln); serveErr != nil && serveErr != http.ErrServerClosed {
-			errChan <- fmt.Errorf("health server failed to serve: %w", serveErr)
-		}
-	}()
 
 	return server, ln, nil
 }

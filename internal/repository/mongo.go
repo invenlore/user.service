@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/invenlore/core/pkg/config"
 	"github.com/invenlore/user.service/internal/domain"
@@ -19,7 +20,7 @@ type UserRepository interface {
 	Insert(context.Context, *domain.User) (primitive.ObjectID, error)
 	FindOne(context.Context, primitive.ObjectID) (*domain.User, error)
 	DeleteOne(context.Context, primitive.ObjectID) (int64, error)
-	FindAll(context.Context) ([]*domain.User, error)
+	StreamAll(ctx context.Context, fn func(*domain.User) error) error
 }
 
 func NewUserRepository(db *mongo.Client, cfg *config.MongoConfig) UserRepository {
@@ -38,7 +39,12 @@ func (r *userRepository) Insert(ctx context.Context, user *domain.User) (primiti
 		return primitive.ObjectID{}, err
 	}
 
-	return result.InsertedID.(primitive.ObjectID), nil
+	objID, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return primitive.ObjectID{}, fmt.Errorf("unexpected inserted id type: %T", result.InsertedID)
+	}
+
+	return objID, nil
 }
 
 func (r *userRepository) FindOne(ctx context.Context, id primitive.ObjectID) (*domain.User, error) {
@@ -48,8 +54,7 @@ func (r *userRepository) FindOne(ctx context.Context, id primitive.ObjectID) (*d
 	var user domain.User
 	filter := bson.M{"_id": id}
 
-	err := r.col.FindOne(ctx, filter).Decode(&user)
-	if err != nil {
+	if err := r.col.FindOne(ctx, filter).Decode(&user); err != nil {
 		return nil, err
 	}
 
@@ -70,28 +75,27 @@ func (r *userRepository) DeleteOne(ctx context.Context, id primitive.ObjectID) (
 	return result.DeletedCount, nil
 }
 
-func (r *userRepository) FindAll(ctx context.Context) ([]*domain.User, error) {
-	var users []*domain.User
-
-	ctx, cancel := context.WithTimeout(ctx, r.cfg.OperationTimeout)
-	defer cancel()
-
+func (r *userRepository) StreamAll(ctx context.Context, fn func(*domain.User) error) error {
 	cur, err := r.col.Find(ctx, bson.D{})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	defer cur.Close(ctx)
+	defer func() { _ = cur.Close(context.Background()) }()
 
 	for cur.Next(ctx) {
-		var user domain.User
-
-		if err := cur.Decode(&user); err != nil {
-			return nil, err
+		var u domain.User
+		if err := cur.Decode(&u); err != nil {
+			return err
 		}
-
-		users = append(users, &user)
+		if err := fn(&u); err != nil {
+			return err
+		}
 	}
 
-	return users, nil
+	if err := cur.Err(); err != nil {
+		return err
+	}
+
+	return nil
 }
