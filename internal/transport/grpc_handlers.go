@@ -3,11 +3,9 @@ package transport
 import (
 	"context"
 	"strings"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/invenlore/proto/pkg/user"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -24,15 +22,9 @@ func (s *GRPCUserServer) HealthCheck(
 	ctx context.Context,
 	req *user.HealthRequest,
 ) (*user.HealthResponse, error) {
-	if s.mongoClient == nil {
-		return nil, status.Error(codes.Internal, "MongoDB client is not initialized")
-	}
-
-	pingCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-
-	if err := s.mongoClient.Ping(pingCtx, readpref.Primary()); err != nil {
-		return nil, status.Error(codes.Unavailable, "MongoDB unavailable: "+err.Error())
+	if err := s.mongoReadiness.CheckNow(ctx); err != nil {
+		return &user.HealthResponse{Status: "down"},
+			status.Error(codes.Unavailable, "MongoDB unavailable: "+err.Error())
 	}
 
 	return &user.HealthResponse{Status: "up"}, nil
@@ -50,6 +42,7 @@ func (s *GRPCUserServer) AddUser(
 		Name:  strings.TrimSpace(req.User.Name),
 		Email: strings.TrimSpace(req.User.Email),
 	}
+
 	if err := v.Struct(in); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}

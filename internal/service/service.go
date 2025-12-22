@@ -53,7 +53,7 @@ func (s *userService) GetUser(ctx context.Context, id string) (*user.User, codes
 		case mongo.ErrNoDocuments:
 			return nil, codes.NotFound, fmt.Errorf("user for id (%s) is not found", id)
 		default:
-			return nil, codes.Unknown, err
+			return nil, codes.Internal, err
 		}
 	}
 

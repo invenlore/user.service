@@ -5,32 +5,32 @@ import (
 	"net"
 
 	"github.com/invenlore/core/pkg/config"
+	"github.com/invenlore/core/pkg/db"
 	"github.com/invenlore/core/pkg/logger"
 	"github.com/invenlore/core/pkg/recovery"
 	"github.com/invenlore/proto/pkg/user"
 	"github.com/invenlore/user.service/internal/service"
 	"github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc"
 )
 
 type GRPCUserServer struct {
-	svc         service.UserService
-	mongoClient *mongo.Client
+	svc            service.UserService
+	mongoReadiness *db.MongoReadiness
 	user.UnimplementedUserServiceServer
 }
 
-func NewGRPCUserServer(svc service.UserService, mongoClient *mongo.Client) *GRPCUserServer {
+func NewGRPCUserServer(svc service.UserService, mongoReadiness *db.MongoReadiness) *GRPCUserServer {
 	return &GRPCUserServer{
-		svc:         svc,
-		mongoClient: mongoClient,
+		svc:            svc,
+		mongoReadiness: mongoReadiness,
 	}
 }
 
 func NewGRPCServer(
 	cfg *config.GRPCServerConfig,
 	svc service.UserService,
-	mongoClient *mongo.Client,
+	mongoReadiness *db.MongoReadiness,
 ) (*grpc.Server, net.Listener, error) {
 	var (
 		loggerEntry = logrus.WithField("scope", "grpcServer")
@@ -46,12 +46,14 @@ func NewGRPCServer(
 
 	unaryInterceptors := []grpc.UnaryServerInterceptor{
 		recovery.RecoveryUnaryInterceptor,
+		db.MongoGateUnary(mongoReadiness),
 		logger.ServerRequestIDInterceptor,
 		logger.ServerLoggingInterceptor,
 	}
 
 	streamInterceptors := []grpc.StreamServerInterceptor{
 		recovery.RecoveryStreamInterceptor,
+		db.MongoGateStream(mongoReadiness),
 		logger.ServerStreamRequestIDInterceptor,
 		logger.ServerStreamLoggingInterceptor,
 	}
@@ -61,6 +63,7 @@ func NewGRPCServer(
 		grpc.ChainStreamInterceptor(streamInterceptors...),
 	)
 
-	user.RegisterUserServiceServer(server, NewGRPCUserServer(svc, mongoClient))
+	user.RegisterUserServiceServer(server, NewGRPCUserServer(svc, mongoReadiness))
+
 	return server, ln, nil
 }

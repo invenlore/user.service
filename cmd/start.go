@@ -31,18 +31,27 @@ func Start() {
 	}
 
 	appCfg := cfg.GetConfig()
+	mongoCfg := appCfg.GetMongoConfig()
 
 	baseCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
 	g, ctx := errgroup.WithContext(baseCtx)
 
-	mongoClient, err := db.MongoDBConnect(ctx, appCfg.GetMongoConfig())
+	mongoClient, err := db.MongoDBConnect(ctx, mongoCfg)
 	if err != nil {
 		loggerEntry.Fatalf("MongoDB connect failed: %v", err)
 	}
 
 	loggerEntry.Info("MongoDB connected successfully")
+
+	mongoReadiness := db.NewMongoReadiness(mongoClient, mongoCfg.HealthCheckTimeout)
+
+	g.Go(func() error {
+		mongoReadiness.Run(ctx, mongoCfg.HealthCheckInterval)
+
+		return nil
+	})
 
 	g.Go(func() error {
 		<-ctx.Done()
@@ -53,15 +62,15 @@ func Start() {
 		return mongoClient.Disconnect(stopCtx)
 	})
 
-	repo := repository.NewUserRepository(mongoClient, appCfg.GetMongoConfig())
+	repo := repository.NewUserRepository(mongoClient, mongoCfg)
 	svc := service.NewUserService(repo)
 
-	grpcSrv, grpcLn, err := transport.NewGRPCServer(appCfg.GetGRPCConfig(), svc, mongoClient)
+	grpcSrv, grpcLn, err := transport.NewGRPCServer(appCfg.GetGRPCConfig(), svc, mongoReadiness)
 	if err != nil {
 		loggerEntry.Fatalf("gRPC server init failed: %v", err)
 	}
 
-	healthSrv, healthLn, err := transport.NewHealthServer(appCfg, mongoClient)
+	healthSrv, healthLn, err := transport.NewHealthServer(appCfg.GetHealthConfig())
 	if err != nil {
 		_ = grpcLn.Close()
 
