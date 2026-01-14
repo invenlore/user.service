@@ -18,22 +18,15 @@ type addUserInput struct {
 	Email string `validate:"required,email,max=254"`
 }
 
-func (s *GRPCUserServer) HealthCheck(
-	ctx context.Context,
-	req *user.HealthRequest,
-) (*user.HealthResponse, error) {
-	if err := s.mongoReadiness.CheckNow(ctx); err != nil {
-		return &user.HealthResponse{Status: "down"},
-			status.Error(codes.Unavailable, "MongoDB unavailable: "+err.Error())
+func (s *GRPCUserServer) HealthCheck(ctx context.Context, req *user.HealthRequest) (*user.HealthResponse, error) {
+	if !s.mongoReadiness.Ready() {
+		return &user.HealthResponse{Status: "down"}, status.Error(codes.Unavailable, s.mongoReadiness.LastError())
 	}
 
 	return &user.HealthResponse{Status: "up"}, nil
 }
 
-func (s *GRPCUserServer) AddUser(
-	ctx context.Context,
-	req *user.AddUserRequest,
-) (*user.AddUserResponse, error) {
+func (s *GRPCUserServer) AddUser(ctx context.Context, req *user.AddUserRequest) (*user.AddUserResponse, error) {
 	if req == nil || req.User == nil {
 		return nil, status.Error(codes.InvalidArgument, "user is required")
 	}
@@ -58,10 +51,7 @@ func (s *GRPCUserServer) AddUser(
 	return &user.AddUserResponse{Id: lastInsertId}, nil
 }
 
-func (s *GRPCUserServer) GetUser(
-	ctx context.Context,
-	req *user.GetUserRequest,
-) (*user.GetUserResponse, error) {
+func (s *GRPCUserServer) GetUser(ctx context.Context, req *user.GetUserRequest) (*user.GetUserResponse, error) {
 	if req == nil || strings.TrimSpace(req.Id) == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
@@ -74,10 +64,7 @@ func (s *GRPCUserServer) GetUser(
 	return &user.GetUserResponse{User: ptrUser}, nil
 }
 
-func (s *GRPCUserServer) DeleteUser(
-	ctx context.Context,
-	req *user.DeleteUserRequest,
-) (*user.DeleteUserResponse, error) {
+func (s *GRPCUserServer) DeleteUser(ctx context.Context, req *user.DeleteUserRequest) (*user.DeleteUserResponse, error) {
 	if req == nil || strings.TrimSpace(req.Id) == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
@@ -91,10 +78,7 @@ func (s *GRPCUserServer) DeleteUser(
 }
 
 // TODO: ListUsers -> StreamUsers
-func (s *GRPCUserServer) ListUsers(
-	req *user.ListUsersRequest,
-	srv grpc.ServerStreamingServer[user.ListUsersResponse],
-) error {
+func (s *GRPCUserServer) ListUsers(req *user.ListUsersRequest, srv grpc.ServerStreamingServer[user.ListUsersResponse]) error {
 	ctx := srv.Context()
 
 	code, err := s.svc.StreamUsers(ctx, func(u *user.User) error {

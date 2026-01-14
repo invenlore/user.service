@@ -27,11 +27,7 @@ func NewGRPCUserServer(svc service.UserService, mongoReadiness *db.MongoReadines
 	}
 }
 
-func NewGRPCServer(
-	cfg *config.GRPCServerConfig,
-	svc service.UserService,
-	mongoReadiness *db.MongoReadiness,
-) (*grpc.Server, net.Listener, error) {
+func NewGRPCServer(cfg *config.GRPCServerConfig, svc service.UserService, mongoReadiness *db.MongoReadiness) (*grpc.Server, net.Listener, error) {
 	var (
 		loggerEntry = logrus.WithField("scope", "grpcServer")
 		listenAddr  = net.JoinHostPort(cfg.Host, cfg.Port)
@@ -46,16 +42,16 @@ func NewGRPCServer(
 
 	unaryInterceptors := []grpc.UnaryServerInterceptor{
 		recovery.RecoveryUnaryInterceptor,
-		db.MongoGateUnary(mongoReadiness),
 		logger.ServerRequestIDInterceptor,
 		logger.ServerLoggingInterceptor,
+		db.MongoGateUnary(mongoReadiness, user.UserService_HealthCheck_FullMethodName),
 	}
 
 	streamInterceptors := []grpc.StreamServerInterceptor{
 		recovery.RecoveryStreamInterceptor,
-		db.MongoGateStream(mongoReadiness),
 		logger.ServerStreamRequestIDInterceptor,
 		logger.ServerStreamLoggingInterceptor,
+		db.MongoGateStream(mongoReadiness, user.UserService_HealthCheck_FullMethodName),
 	}
 
 	server := grpc.NewServer(

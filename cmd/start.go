@@ -15,6 +15,8 @@ import (
 
 	"github.com/invenlore/core/pkg/config"
 	"github.com/invenlore/core/pkg/db"
+	"github.com/invenlore/core/pkg/migrator"
+	"github.com/invenlore/user.service/internal/migrations"
 	"github.com/invenlore/user.service/internal/repository"
 	"github.com/invenlore/user.service/internal/service"
 	"github.com/invenlore/user.service/internal/transport"
@@ -46,9 +48,45 @@ func Start() {
 	loggerEntry.Info("MongoDB connected successfully")
 
 	mongoReadiness := db.NewMongoReadiness(mongoClient, mongoCfg.HealthCheckTimeout)
+	mongoReadiness.CloseGate("MongoDB migrations in progress")
 
 	g.Go(func() error {
 		mongoReadiness.Run(ctx, mongoCfg.HealthCheckInterval)
+
+		return nil
+	})
+
+	host, _ := os.Hostname()
+	owner := migrator.DefaultOwnerID(host)
+
+	// TODO: ENV
+	mgr := migrator.NewManager(mongoClient.Database(mongoCfg.DatabaseName), owner, migrator.Config{
+		LockKey:      "userservice:migrations",
+		LeaseFor:     30 * time.Second,
+		PollInterval: 2 * time.Second,
+		OpTimeout:    5 * time.Second,
+		Logger:       loggerEntry,
+		FailFast:     true,
+	})
+
+	g.Go(func() error {
+		migCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
+
+		if err := mgr.Run(migCtx, migrations.List()); err != nil {
+			loggerEntry.Errorf("MongoDB migrations failed, keeping service in degraded mode: %v", err)
+			mongoReadiness.CloseGate("MongoDB migrations failed: " + err.Error())
+
+			return nil
+		}
+
+		mongoReadiness.OpenGate()
+
+		if err := mongoReadiness.CheckNow(ctx); err != nil {
+			loggerEntry.Warnf("MongoDB readiness check after migrations failed: %v", err)
+		}
+
+		loggerEntry.Info("MongoDB migrations completed")
 
 		return nil
 	})
