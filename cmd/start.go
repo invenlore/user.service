@@ -59,21 +59,19 @@ func Start() {
 	host, _ := os.Hostname()
 	owner := migrator.DefaultOwnerID(host)
 
-	// TODO: ENV
-	mgr := migrator.NewManager(mongoClient.Database(mongoCfg.DatabaseName), owner, migrator.Config{
-		LockKey:      "userservice:migrations",
-		LeaseFor:     30 * time.Second,
-		PollInterval: 2 * time.Second,
-		OpTimeout:    5 * time.Second,
-		Logger:       loggerEntry,
-		FailFast:     true,
+	mgr := migrator.NewManager(mongoClient.Database(mongoCfg.DatabaseName), owner, migrator.ManagerConfig{
+		LockKey:          "userservice:migrations",
+		MigrationTimeout: mongoCfg.MigrationTimeout,
+		LeaseFor:         mongoCfg.MigrationLeaseForTimeout,
+		PollInterval:     mongoCfg.MigrationPollInterval,
+		OpTimeout:        mongoCfg.MigrationServiceTimeout,
+		Logger:           loggerEntry,
+		FailFast:         true,
+		WaitForLeader:    true,
 	})
 
 	g.Go(func() error {
-		migCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-		defer cancel()
-
-		if err := mgr.Run(migCtx, migrations.List()); err != nil {
+		if err := mgr.Run(ctx, migrations.List()); err != nil {
 			loggerEntry.Errorf("MongoDB migrations failed, keeping service in degraded mode: %v", err)
 			mongoReadiness.CloseGate("MongoDB migrations failed: " + err.Error())
 
@@ -85,8 +83,6 @@ func Start() {
 		if err := mongoReadiness.CheckNow(ctx); err != nil {
 			loggerEntry.Warnf("MongoDB readiness check after migrations failed: %v", err)
 		}
-
-		loggerEntry.Info("MongoDB migrations completed")
 
 		return nil
 	})
