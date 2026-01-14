@@ -16,3 +16,6 @@ down:
 
 logs:
 	docker-compose logs -f
+
+workflow:
+	pin-github-action .github/workflows/master.yaml

@@ -16,6 +16,9 @@ make down
 
 # logs
 make logs
+
+# pin all actions in master.yaml workflow
+make workflow
 ```
 
 ### Or just run:
