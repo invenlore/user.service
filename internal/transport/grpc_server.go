@@ -8,26 +8,26 @@ import (
 	"github.com/invenlore/core/pkg/db"
 	"github.com/invenlore/core/pkg/logger"
 	"github.com/invenlore/core/pkg/recovery"
-	"github.com/invenlore/proto/pkg/user"
-	"github.com/invenlore/user.service/internal/service"
+	"github.com/invenlore/identity.service/internal/service"
+	"github.com/invenlore/proto/pkg/identity"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
 type GRPCUserServer struct {
-	svc            service.UserService
+	svc            service.IdentityService
 	mongoReadiness *db.MongoReadiness
-	user.UnimplementedUserServiceServer
+	identity.UnimplementedIdentityServiceServer
 }
 
-func NewGRPCUserServer(svc service.UserService, mongoReadiness *db.MongoReadiness) *GRPCUserServer {
+func NewGRPCUserServer(svc service.IdentityService, mongoReadiness *db.MongoReadiness) *GRPCUserServer {
 	return &GRPCUserServer{
 		svc:            svc,
 		mongoReadiness: mongoReadiness,
 	}
 }
 
-func NewGRPCServer(cfg *config.GRPCServerConfig, svc service.UserService, mongoReadiness *db.MongoReadiness) (*grpc.Server, net.Listener, error) {
+func NewGRPCServer(cfg *config.GRPCServerConfig, svc service.IdentityService, mongoReadiness *db.MongoReadiness) (*grpc.Server, net.Listener, error) {
 	var (
 		loggerEntry = logrus.WithField("scope", "grpcServer")
 		listenAddr  = net.JoinHostPort(cfg.Host, cfg.Port)
@@ -44,14 +44,14 @@ func NewGRPCServer(cfg *config.GRPCServerConfig, svc service.UserService, mongoR
 		recovery.RecoveryUnaryInterceptor,
 		logger.ServerRequestIDInterceptor,
 		logger.ServerLoggingInterceptor,
-		db.MongoGateUnary(mongoReadiness, user.UserService_HealthCheck_FullMethodName),
+		db.MongoGateUnary(mongoReadiness, identity.IdentityService_HealthCheck_FullMethodName),
 	}
 
 	streamInterceptors := []grpc.StreamServerInterceptor{
 		recovery.RecoveryStreamInterceptor,
 		logger.ServerStreamRequestIDInterceptor,
 		logger.ServerStreamLoggingInterceptor,
-		db.MongoGateStream(mongoReadiness, user.UserService_HealthCheck_FullMethodName),
+		db.MongoGateStream(mongoReadiness, identity.IdentityService_HealthCheck_FullMethodName),
 	}
 
 	server := grpc.NewServer(
@@ -59,7 +59,7 @@ func NewGRPCServer(cfg *config.GRPCServerConfig, svc service.UserService, mongoR
 		grpc.ChainStreamInterceptor(streamInterceptors...),
 	)
 
-	user.RegisterUserServiceServer(server, NewGRPCUserServer(svc, mongoReadiness))
+	identity.RegisterIdentityServiceServer(server, NewGRPCUserServer(svc, mongoReadiness))
 
 	return server, ln, nil
 }

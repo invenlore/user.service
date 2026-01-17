@@ -16,10 +16,10 @@ import (
 	"github.com/invenlore/core/pkg/config"
 	"github.com/invenlore/core/pkg/db"
 	"github.com/invenlore/core/pkg/migrator"
-	"github.com/invenlore/user.service/internal/migrations"
-	"github.com/invenlore/user.service/internal/repository"
-	"github.com/invenlore/user.service/internal/service"
-	"github.com/invenlore/user.service/internal/transport"
+	"github.com/invenlore/identity.service/internal/migrations"
+	"github.com/invenlore/identity.service/internal/repository"
+	"github.com/invenlore/identity.service/internal/service"
+	"github.com/invenlore/identity.service/internal/transport"
 	"github.com/sirupsen/logrus"
 )
 
@@ -60,7 +60,7 @@ func Start() {
 	owner := migrator.DefaultOwnerID(host)
 
 	mgr := migrator.NewManager(mongoClient.Database(mongoCfg.DatabaseName), owner, migrator.ManagerConfig{
-		LockKey:          "userservice:migrations",
+		LockKey:          "identityservice:migrations",
 		MigrationTimeout: mongoCfg.MigrationTimeout,
 		LeaseFor:         mongoCfg.MigrationLeaseForTimeout,
 		PollInterval:     mongoCfg.MigrationPollInterval,
@@ -96,8 +96,8 @@ func Start() {
 		return mongoClient.Disconnect(stopCtx)
 	})
 
-	repo := repository.NewUserRepository(mongoClient, mongoCfg)
-	svc := service.NewUserService(repo)
+	repo := repository.NewIdentityRepository(mongoClient, mongoCfg)
+	svc := service.NewIdentityService(repo)
 
 	grpcSrv, grpcLn, err := transport.NewGRPCServer(appCfg.GetGRPCConfig(), svc, mongoReadiness)
 	if err != nil {

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/invenlore/proto/pkg/user"
+	"github.com/invenlore/proto/pkg/identity"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -18,15 +18,15 @@ type addUserInput struct {
 	Email string `validate:"required,email,max=254"`
 }
 
-func (s *GRPCUserServer) HealthCheck(ctx context.Context, req *user.HealthRequest) (*user.HealthResponse, error) {
+func (s *GRPCUserServer) HealthCheck(ctx context.Context, req *identity.HealthRequest) (*identity.HealthResponse, error) {
 	if !s.mongoReadiness.Ready() {
-		return &user.HealthResponse{Status: "down"}, status.Error(codes.Unavailable, s.mongoReadiness.LastError())
+		return &identity.HealthResponse{Status: "down"}, status.Error(codes.Unavailable, s.mongoReadiness.LastError())
 	}
 
-	return &user.HealthResponse{Status: "up"}, nil
+	return &identity.HealthResponse{Status: "up"}, nil
 }
 
-func (s *GRPCUserServer) AddUser(ctx context.Context, req *user.AddUserRequest) (*user.AddUserResponse, error) {
+func (s *GRPCUserServer) AddUser(ctx context.Context, req *identity.AddUserRequest) (*identity.AddUserResponse, error) {
 	if req == nil || req.User == nil {
 		return nil, status.Error(codes.InvalidArgument, "user is required")
 	}
@@ -48,10 +48,10 @@ func (s *GRPCUserServer) AddUser(ctx context.Context, req *user.AddUserRequest) 
 		return nil, status.Error(code, err.Error())
 	}
 
-	return &user.AddUserResponse{Id: lastInsertId}, nil
+	return &identity.AddUserResponse{Id: lastInsertId}, nil
 }
 
-func (s *GRPCUserServer) GetUser(ctx context.Context, req *user.GetUserRequest) (*user.GetUserResponse, error) {
+func (s *GRPCUserServer) GetUser(ctx context.Context, req *identity.GetUserRequest) (*identity.GetUserResponse, error) {
 	if req == nil || strings.TrimSpace(req.Id) == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
@@ -61,10 +61,10 @@ func (s *GRPCUserServer) GetUser(ctx context.Context, req *user.GetUserRequest) 
 		return nil, status.Error(code, err.Error())
 	}
 
-	return &user.GetUserResponse{User: ptrUser}, nil
+	return &identity.GetUserResponse{User: ptrUser}, nil
 }
 
-func (s *GRPCUserServer) DeleteUser(ctx context.Context, req *user.DeleteUserRequest) (*user.DeleteUserResponse, error) {
+func (s *GRPCUserServer) DeleteUser(ctx context.Context, req *identity.DeleteUserRequest) (*identity.DeleteUserResponse, error) {
 	if req == nil || strings.TrimSpace(req.Id) == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
@@ -74,15 +74,15 @@ func (s *GRPCUserServer) DeleteUser(ctx context.Context, req *user.DeleteUserReq
 		return nil, status.Error(code, err.Error())
 	}
 
-	return &user.DeleteUserResponse{}, nil
+	return &identity.DeleteUserResponse{}, nil
 }
 
 // TODO: ListUsers -> StreamUsers
-func (s *GRPCUserServer) ListUsers(req *user.ListUsersRequest, srv grpc.ServerStreamingServer[user.ListUsersResponse]) error {
+func (s *GRPCUserServer) ListUsers(req *identity.ListUsersRequest, srv grpc.ServerStreamingServer[identity.ListUsersResponse]) error {
 	ctx := srv.Context()
 
-	code, err := s.svc.StreamUsers(ctx, func(u *user.User) error {
-		return srv.Send(&user.ListUsersResponse{User: u})
+	code, err := s.svc.StreamUsers(ctx, func(u *identity.User) error {
+		return srv.Send(&identity.ListUsersResponse{User: u})
 	})
 
 	if err != nil {

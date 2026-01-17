@@ -6,11 +6,11 @@ fresh:
 
 fresh/scaled:
 	docker-compose down --remove-orphans -v
-	docker-compose up -d --build --scale user-service=2
+	docker-compose up -d --build --scale identity-service=2
 
 run:
-	go build -o ./bin/user-service
-	./bin/user-service
+	go build -o ./bin/identity-service
+	./bin/identity-service
 
 up:
 	docker-compose up -d

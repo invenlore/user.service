@@ -4,31 +4,31 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/invenlore/proto/pkg/user"
-	"github.com/invenlore/user.service/internal/domain"
-	"github.com/invenlore/user.service/internal/repository"
+	"github.com/invenlore/identity.service/internal/domain"
+	"github.com/invenlore/identity.service/internal/repository"
+	"github.com/invenlore/proto/pkg/identity"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc/codes"
 )
 
-type userService struct {
-	Repository repository.UserRepository
+type identityService struct {
+	Repository repository.IdentityRepository
 }
 
-type UserService interface {
-	AddUser(context.Context, *user.User) (string, codes.Code, error)
-	GetUser(context.Context, string) (*user.User, codes.Code, error)
+type IdentityService interface {
+	AddUser(context.Context, *identity.User) (string, codes.Code, error)
+	GetUser(context.Context, string) (*identity.User, codes.Code, error)
 	DeleteUser(context.Context, string) (codes.Code, error)
-	StreamUsers(ctx context.Context, send func(*user.User) error) (codes.Code, error)
+	StreamUsers(ctx context.Context, send func(*identity.User) error) (codes.Code, error)
 }
 
-func NewUserService(repository repository.UserRepository) UserService {
-	return &userService{Repository: repository}
+func NewIdentityService(repository repository.IdentityRepository) IdentityService {
+	return &identityService{Repository: repository}
 }
 
-func (s *userService) AddUser(ctx context.Context, u *user.User) (string, codes.Code, error) {
-	lastInsertId, err := s.Repository.Insert(ctx, &domain.User{
+func (s *identityService) AddUser(ctx context.Context, u *identity.User) (string, codes.Code, error) {
+	lastInsertId, err := s.Repository.InsertUser(ctx, &domain.User{
 		Name:  u.Name,
 		Email: u.Email,
 	})
@@ -40,13 +40,13 @@ func (s *userService) AddUser(ctx context.Context, u *user.User) (string, codes.
 	return lastInsertId.Hex(), codes.OK, nil
 }
 
-func (s *userService) GetUser(ctx context.Context, id string) (*user.User, codes.Code, error) {
+func (s *identityService) GetUser(ctx context.Context, id string) (*identity.User, codes.Code, error) {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, codes.InvalidArgument, fmt.Errorf("converting string to ObjectID failed: %v", err)
 	}
 
-	ptrUser, err := s.Repository.FindOne(ctx, objID)
+	ptrUser, err := s.Repository.FindOneUser(ctx, objID)
 
 	if err != nil {
 		switch err {
@@ -57,20 +57,20 @@ func (s *userService) GetUser(ctx context.Context, id string) (*user.User, codes
 		}
 	}
 
-	return &user.User{
+	return &identity.User{
 		Id:    ptrUser.Id.Hex(),
 		Name:  ptrUser.Name,
 		Email: ptrUser.Email,
 	}, codes.OK, nil
 }
 
-func (s *userService) DeleteUser(ctx context.Context, id string) (codes.Code, error) {
+func (s *identityService) DeleteUser(ctx context.Context, id string) (codes.Code, error) {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return codes.InvalidArgument, fmt.Errorf("converting string to ObjectID failed: %v", err)
 	}
 
-	deletedCount, err := s.Repository.DeleteOne(ctx, objID)
+	deletedCount, err := s.Repository.DeleteOneUser(ctx, objID)
 	if err != nil {
 		return codes.Internal, err
 	}
@@ -82,9 +82,9 @@ func (s *userService) DeleteUser(ctx context.Context, id string) (codes.Code, er
 	return codes.OK, nil
 }
 
-func (s *userService) StreamUsers(ctx context.Context, send func(*user.User) error) (codes.Code, error) {
-	err := s.Repository.StreamAll(ctx, func(u *domain.User) error {
-		return send(&user.User{
+func (s *identityService) StreamUsers(ctx context.Context, send func(*identity.User) error) (codes.Code, error) {
+	err := s.Repository.StreamAllUsers(ctx, func(u *domain.User) error {
+		return send(&identity.User{
 			Id:    u.Id.Hex(),
 			Name:  u.Name,
 			Email: u.Email,

@@ -1,11 +1,11 @@
-module github.com/invenlore/user.service
+module github.com/invenlore/identity.service
 
 go 1.24.11
 
 require (
 	github.com/go-playground/validator/v10 v10.30.1
-	github.com/invenlore/core v0.1.10
-	github.com/invenlore/proto v1.3.7
+	github.com/invenlore/core v0.1.11
+	github.com/invenlore/proto v1.3.8
 	github.com/sirupsen/logrus v1.9.4
 	go.mongodb.org/mongo-driver v1.17.6
 	golang.org/x/sync v0.19.0
@@ -21,7 +21,7 @@ require (
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.4 // indirect
-	github.com/klauspost/compress v1.18.2 // indirect
+	github.com/klauspost/compress v1.18.3 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect

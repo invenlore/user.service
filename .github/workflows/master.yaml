@@ -13,7 +13,7 @@ jobs:
       - name: checkout service
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          repository: invenlore/user.service
+          repository: invenlore/identity.service
           ref: ${{ github.event.release.tag_name }}
 
       - name: login to docker hub
@@ -44,8 +44,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            invenlore/invenlore-user-service:master
-            invenlore/invenlore-user-service:${{ github.event.release.tag_name }}
+            invenlore/invenlore-identity-service:master
+            invenlore/invenlore-identity-service:${{ github.event.release.tag_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -54,7 +54,7 @@ jobs:
         with:
           token: ${{ secrets.DOKPLOY_AUTH_TOKEN }}
           application_id: ${{ secrets.DOKPLOY_APPLICATION_ID }}
-          image: invenlore/invenlore-user-service:${{ github.event.release.tag_name }}
+          image: invenlore/invenlore-identity-service:${{ github.event.release.tag_name }}
           base_url: ${{ secrets.DOKPLOY_URL }}
 
       - name: dokploy deployment

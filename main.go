@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/invenlore/user.service/cmd"
+	"github.com/invenlore/identity.service/cmd"
 )
 
 func main() {
