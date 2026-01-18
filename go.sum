@@ -32,6 +32,8 @@ github.com/invenlore/core v0.1.11 h1:p75CdcdILWkPCqF0Kk2JZ8/L1npEHQ4AGTeS694KkdU
 github.com/invenlore/core v0.1.11/go.mod h1:Ypho6CAwSyWvJiCTOArU7ROAUvFNU0eLJjABOFu99a0=
 github.com/invenlore/proto v1.3.8 h1:3af9yL5KiLNSRw4kYHredfWiZ/rFgiJDlSFAyqSutiU=
 github.com/invenlore/proto v1.3.8/go.mod h1:ptCcYw1BKHacVKYGt4ew2wVTI7xHBlNGw0kCsAm9HbM=
+github.com/invenlore/proto v1.3.9 h1:rL0ApVN4AxWYFW6dEUUjde8ROXQa1U9freFrx3siyTg=
+github.com/invenlore/proto v1.3.9/go.mod h1:ptCcYw1BKHacVKYGt4ew2wVTI7xHBlNGw0kCsAm9HbM=
 github.com/klauspost/compress v1.18.3 h1:9PJRvfbmTabkOX8moIpXPbMMbYN60bWImDDU7L+/6zw=
 github.com/klauspost/compress v1.18.3/go.mod h1:R0h/fSBs8DE4ENlcrlib3PsXS61voFxhIs2DeRhCvJ4=
 github.com/leodido/go-urn v1.4.0 h1:WT9HwE9SGECu3lg4d/dIA+jxlljEa1/ffXKmRjqdmIQ=
