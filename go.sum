@@ -30,6 +30,8 @@ github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.4 h1:kEISI/Gx67NzH3nJxAmY/dGac80
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.4/go.mod h1:6Nz966r3vQYCqIzWsuEl9d7cf7mRhtDmm++sOxlnfxI=
 github.com/invenlore/core v0.1.11 h1:p75CdcdILWkPCqF0Kk2JZ8/L1npEHQ4AGTeS694KkdU=
 github.com/invenlore/core v0.1.11/go.mod h1:Ypho6CAwSyWvJiCTOArU7ROAUvFNU0eLJjABOFu99a0=
+github.com/invenlore/core v0.1.12 h1:7Y7CybcyKy4ef3vKoZ8H4gJcaMLs+MTd38GfIgznf88=
+github.com/invenlore/core v0.1.12/go.mod h1:vhdvQEqy472ET/9Lhz7t+R1m4S5tNoj11lXta++HBfI=
 github.com/invenlore/proto v1.3.8 h1:3af9yL5KiLNSRw4kYHredfWiZ/rFgiJDlSFAyqSutiU=
 github.com/invenlore/proto v1.3.8/go.mod h1:ptCcYw1BKHacVKYGt4ew2wVTI7xHBlNGw0kCsAm9HbM=
 github.com/invenlore/proto v1.3.9 h1:rL0ApVN4AxWYFW6dEUUjde8ROXQa1U9freFrx3siyTg=

@@ -4,7 +4,7 @@ go 1.24.11
 
 require (
 	github.com/go-playground/validator/v10 v10.30.1
-	github.com/invenlore/core v0.1.11
+	github.com/invenlore/core v0.1.12
 	github.com/invenlore/proto v1.3.9
 	github.com/sirupsen/logrus v1.9.4
 	go.mongodb.org/mongo-driver v1.17.6
