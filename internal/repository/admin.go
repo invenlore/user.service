@@ -11,26 +11,26 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type identityRepository struct {
+type identityAdminRepository struct {
 	usersCol *mongo.Collection
 	cfg      *config.MongoConfig
 }
 
-type IdentityRepository interface {
+type IdentityAdminRepository interface {
 	InsertUser(context.Context, *domain.User) (primitive.ObjectID, error)
 	FindOneUser(context.Context, primitive.ObjectID) (*domain.User, error)
 	DeleteOneUser(context.Context, primitive.ObjectID) (int64, error)
-	StreamAllUsers(ctx context.Context, fn func(*domain.User) error) error
+	ListUsers(ctx context.Context) ([]*domain.User, error)
 }
 
-func NewIdentityRepository(db *mongo.Client, cfg *config.MongoConfig) IdentityRepository {
-	return &identityRepository{
+func NewIdentityAdminRepository(db *mongo.Client, cfg *config.MongoConfig) IdentityAdminRepository {
+	return &identityAdminRepository{
 		usersCol: db.Database(cfg.DatabaseName).Collection("users"),
 		cfg:      cfg,
 	}
 }
 
-func (r *identityRepository) InsertUser(ctx context.Context, user *domain.User) (primitive.ObjectID, error) {
+func (r *identityAdminRepository) InsertUser(ctx context.Context, user *domain.User) (primitive.ObjectID, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.cfg.OperationTimeout)
 	defer cancel()
 
@@ -47,7 +47,7 @@ func (r *identityRepository) InsertUser(ctx context.Context, user *domain.User) 
 	return objID, nil
 }
 
-func (r *identityRepository) FindOneUser(ctx context.Context, id primitive.ObjectID) (*domain.User, error) {
+func (r *identityAdminRepository) FindOneUser(ctx context.Context, id primitive.ObjectID) (*domain.User, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.cfg.OperationTimeout)
 	defer cancel()
 
@@ -61,7 +61,7 @@ func (r *identityRepository) FindOneUser(ctx context.Context, id primitive.Objec
 	return &user, nil
 }
 
-func (r *identityRepository) DeleteOneUser(ctx context.Context, id primitive.ObjectID) (int64, error) {
+func (r *identityAdminRepository) DeleteOneUser(ctx context.Context, id primitive.ObjectID) (int64, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.cfg.OperationTimeout)
 	defer cancel()
 
@@ -75,29 +75,32 @@ func (r *identityRepository) DeleteOneUser(ctx context.Context, id primitive.Obj
 	return result.DeletedCount, nil
 }
 
-func (r *identityRepository) StreamAllUsers(ctx context.Context, fn func(*domain.User) error) error {
+func (r *identityAdminRepository) ListUsers(ctx context.Context) ([]*domain.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, r.cfg.OperationTimeout)
+	defer cancel()
+
 	cur, err := r.usersCol.Find(ctx, bson.D{})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer func() { _ = cur.Close(context.Background()) }()
+
+	users := make([]*domain.User, 0)
 
 	for cur.Next(ctx) {
 		var u domain.User
 
 		if err := cur.Decode(&u); err != nil {
-			return err
+			return nil, err
 		}
 
-		if err := fn(&u); err != nil {
-			return err
-		}
+		users = append(users, &u)
 	}
 
 	if err := cur.Err(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return users, nil
 }

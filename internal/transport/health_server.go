@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewHealthServer(cfg *config.HealthServerConfig) (*http.Server, net.Listener, error) {
+func StartHealthServer(cfg *config.HealthServerConfig) (*http.Server, net.Listener, error) {
 	var (
 		loggerEntry = logrus.WithField("scope", "health")
 		listenAddr  = net.JoinHostPort(cfg.Host, cfg.Port)

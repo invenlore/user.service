@@ -96,15 +96,15 @@ func Start() {
 		return mongoClient.Disconnect(stopCtx)
 	})
 
-	repo := repository.NewIdentityRepository(mongoClient, mongoCfg)
-	svc := service.NewIdentityService(repo)
+	adminRepo := repository.NewIdentityAdminRepository(mongoClient, mongoCfg)
+	adminSvc := service.NewIdentityAdminService(adminRepo)
 
-	grpcSrv, grpcLn, err := transport.NewGRPCServer(appCfg.GetGRPCConfig(), svc, mongoReadiness)
+	grpcSrv, grpcLn, err := transport.StartGRPCServer(appCfg.GetGRPCConfig(), adminSvc, mongoReadiness)
 	if err != nil {
 		loggerEntry.Fatalf("gRPC server init failed: %v", err)
 	}
 
-	healthSrv, healthLn, err := transport.NewHealthServer(appCfg.GetHealthConfig())
+	healthSrv, healthLn, err := transport.StartHealthServer(appCfg.GetHealthConfig())
 	if err != nil {
 		_ = grpcLn.Close()
 

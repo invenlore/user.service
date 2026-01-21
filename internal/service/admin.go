@@ -12,22 +12,22 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-type identityService struct {
-	Repository repository.IdentityRepository
+type identityAdminService struct {
+	Repository repository.IdentityAdminRepository
 }
 
-type IdentityService interface {
+type IdentityAdminService interface {
 	AddUser(context.Context, *identity_v1.User) (string, codes.Code, error)
 	GetUser(context.Context, string) (*identity_v1.User, codes.Code, error)
 	DeleteUser(context.Context, string) (codes.Code, error)
-	StreamUsers(ctx context.Context, send func(*identity_v1.User) error) (codes.Code, error)
+	ListUsers(ctx context.Context) ([]*identity_v1.User, string, codes.Code, error)
 }
 
-func NewIdentityService(repository repository.IdentityRepository) IdentityService {
-	return &identityService{Repository: repository}
+func NewIdentityAdminService(repository repository.IdentityAdminRepository) IdentityAdminService {
+	return &identityAdminService{Repository: repository}
 }
 
-func (s *identityService) AddUser(ctx context.Context, u *identity_v1.User) (string, codes.Code, error) {
+func (s *identityAdminService) AddUser(ctx context.Context, u *identity_v1.User) (string, codes.Code, error) {
 	lastInsertId, err := s.Repository.InsertUser(ctx, &domain.User{
 		Name:  u.Name,
 		Email: u.Email,
@@ -40,7 +40,7 @@ func (s *identityService) AddUser(ctx context.Context, u *identity_v1.User) (str
 	return lastInsertId.Hex(), codes.OK, nil
 }
 
-func (s *identityService) GetUser(ctx context.Context, id string) (*identity_v1.User, codes.Code, error) {
+func (s *identityAdminService) GetUser(ctx context.Context, id string) (*identity_v1.User, codes.Code, error) {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, codes.InvalidArgument, fmt.Errorf("converting string to ObjectID failed: %v", err)
@@ -64,7 +64,7 @@ func (s *identityService) GetUser(ctx context.Context, id string) (*identity_v1.
 	}, codes.OK, nil
 }
 
-func (s *identityService) DeleteUser(ctx context.Context, id string) (codes.Code, error) {
+func (s *identityAdminService) DeleteUser(ctx context.Context, id string) (codes.Code, error) {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return codes.InvalidArgument, fmt.Errorf("converting string to ObjectID failed: %v", err)
@@ -82,19 +82,21 @@ func (s *identityService) DeleteUser(ctx context.Context, id string) (codes.Code
 	return codes.OK, nil
 }
 
-func (s *identityService) StreamUsers(ctx context.Context, send func(*identity_v1.User) error) (codes.Code, error) {
-	err := s.Repository.StreamAllUsers(ctx, func(u *domain.User) error {
-		return send(&identity_v1.User{
+func (s *identityAdminService) ListUsers(ctx context.Context) ([]*identity_v1.User, string, codes.Code, error) {
+	users := make([]*identity_v1.User, 0)
+
+	dbUsers, err := s.Repository.ListUsers(ctx)
+	if err != nil {
+		return nil, "", codes.Internal, err
+	}
+
+	for _, u := range dbUsers {
+		users = append(users, &identity_v1.User{
 			Id:    u.Id.Hex(),
 			Name:  u.Name,
 			Email: u.Email,
 		})
-	})
-
-	if err != nil {
-		// TODO: Check for mongo/stream error - context cancel
-		return codes.Internal, err
 	}
 
-	return codes.OK, nil
+	return users, "", codes.OK, nil
 }
