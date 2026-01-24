@@ -10,9 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-
 	"github.com/invenlore/core/pkg/config"
 	"github.com/invenlore/core/pkg/db"
 	"github.com/invenlore/core/pkg/migrator"
@@ -21,6 +18,8 @@ import (
 	"github.com/invenlore/identity.service/internal/service"
 	"github.com/invenlore/identity.service/internal/transport"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
 )
 
 func Start() {
@@ -34,6 +33,7 @@ func Start() {
 
 	appCfg := cfg.GetConfig()
 	mongoCfg := appCfg.GetMongoConfig()
+	authCfg := appCfg.GetAuthConfig()
 
 	baseCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
@@ -98,8 +98,10 @@ func Start() {
 
 	adminRepo := repository.NewIdentityAdminRepository(mongoClient, mongoCfg)
 	adminSvc := service.NewIdentityAdminService(adminRepo)
+	authRepo := repository.NewIdentityAuthRepository(mongoClient, mongoCfg)
+	authSvc := service.NewIdentityAuthService(authRepo, authCfg)
 
-	grpcSrv, grpcLn, err := transport.StartGRPCServer(appCfg.GetGRPCConfig(), adminSvc, mongoReadiness)
+	grpcSrv, grpcLn, err := transport.StartGRPCServer(appCfg.GetGRPCConfig(), adminSvc, authSvc, mongoReadiness)
 	if err != nil {
 		loggerEntry.Fatalf("gRPC server init failed: %v", err)
 	}

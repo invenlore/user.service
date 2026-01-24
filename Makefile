@@ -12,11 +12,15 @@ run:
 	go build -o ./bin/identity-service
 	./bin/identity-service
 
+restart:
+	docker-compose down --remove-orphans
+	docker-compose up -d --build
+
 up:
-	docker-compose up -d
+	docker-compose up -d --build
 
 down:
-	docker-compose down
+	docker-compose down --remove-orphans
 
 logs:
 	docker-compose logs -f

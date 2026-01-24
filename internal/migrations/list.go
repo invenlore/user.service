@@ -8,5 +8,10 @@ func List() []migrator.Migration {
 	return []migrator.Migration{
 		Migration_20260114_UsersCollection_1,
 		Migration_20260114_UsersUniqueEmailIndex_1,
+		Migration_20260124_AuthKeysCollection_1,
+		Migration_20260124_AuthKeysIndexes_1,
+		Migration_20260124_RefreshSessionsCollection_1,
+		Migration_20260124_RefreshSessionsIndexes_1,
+		Migration_20260124_UsersAuthFields_1,
 	}
 }

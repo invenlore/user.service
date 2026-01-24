@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/invenlore/identity.service/internal/domain"
 	"github.com/invenlore/identity.service/internal/repository"
@@ -28,9 +29,13 @@ func NewIdentityAdminService(repository repository.IdentityAdminRepository) Iden
 }
 
 func (s *identityAdminService) AddUser(ctx context.Context, u *identity_v1.User) (string, codes.Code, error) {
+	now := time.Now().UTC()
 	lastInsertId, err := s.Repository.InsertUser(ctx, &domain.User{
-		Name:  u.Name,
-		Email: u.Email,
+		Name:      u.Name,
+		Email:     u.Email,
+		Roles:     u.Roles,
+		CreatedAt: now,
+		UpdatedAt: now,
 	})
 
 	if err != nil {
@@ -58,9 +63,12 @@ func (s *identityAdminService) GetUser(ctx context.Context, id string) (*identit
 	}
 
 	return &identity_v1.User{
-		Id:    ptrUser.Id.Hex(),
-		Name:  ptrUser.Name,
-		Email: ptrUser.Email,
+		Id:        ptrUser.Id.Hex(),
+		Name:      ptrUser.Name,
+		Email:     ptrUser.Email,
+		Roles:     ptrUser.Roles,
+		CreatedAt: ptrUser.CreatedAt.Unix(),
+		UpdatedAt: ptrUser.UpdatedAt.Unix(),
 	}, codes.OK, nil
 }
 
@@ -92,9 +100,12 @@ func (s *identityAdminService) ListUsers(ctx context.Context) ([]*identity_v1.Us
 
 	for _, u := range dbUsers {
 		users = append(users, &identity_v1.User{
-			Id:    u.Id.Hex(),
-			Name:  u.Name,
-			Email: u.Email,
+			Id:        u.Id.Hex(),
+			Name:      u.Name,
+			Email:     u.Email,
+			Roles:     u.Roles,
+			CreatedAt: u.CreatedAt.Unix(),
+			UpdatedAt: u.UpdatedAt.Unix(),
 		})
 	}
 
