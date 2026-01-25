@@ -17,6 +17,8 @@ type IdentityAuthRepository interface {
 	InsertAuthKey(context.Context, *domain.AuthKey) error
 	FindActiveAuthKey(context.Context) (*domain.AuthKey, error)
 	ListActivePublicKeys(context.Context) ([]*domain.AuthKey, error)
+	UpdateAuthKeyStatus(context.Context, primitive.ObjectID, domain.AuthKeyStatus, *time.Time) error
+	RevokeRetiringBefore(context.Context, time.Time) (int64, error)
 	InsertUserCredentials(context.Context, *domain.User) (primitive.ObjectID, error)
 	FindUserByEmail(context.Context, string) (*domain.User, error)
 	FindUserByID(context.Context, primitive.ObjectID) (*domain.User, error)
@@ -97,6 +99,46 @@ func (r *identityAuthRepository) ListActivePublicKeys(ctx context.Context) ([]*d
 	}
 
 	return keys, nil
+}
+
+func (r *identityAuthRepository) UpdateAuthKeyStatus(ctx context.Context, id primitive.ObjectID, status domain.AuthKeyStatus, rotatedAt *time.Time) error {
+	ctx, cancel := context.WithTimeout(ctx, r.cfg.OperationTimeout)
+	defer cancel()
+
+	update := bson.M{"$set": bson.M{"status": status}}
+	if rotatedAt != nil {
+		update["$set"].(bson.M)["rotated_at"] = *rotatedAt
+	}
+
+	result, err := r.keysCol.UpdateOne(ctx, bson.M{"_id": id}, update)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return mongo.ErrNoDocuments
+	}
+
+	return nil
+}
+
+func (r *identityAuthRepository) RevokeRetiringBefore(ctx context.Context, cutoff time.Time) (int64, error) {
+	ctx, cancel := context.WithTimeout(ctx, r.cfg.OperationTimeout)
+	defer cancel()
+
+	filter := bson.M{
+		"status":     domain.AuthKeyStatusRetiring,
+		"rotated_at": bson.M{"$lte": cutoff},
+	}
+
+	update := bson.M{"$set": bson.M{"status": domain.AuthKeyStatusRevoked}}
+
+	result, err := r.keysCol.UpdateMany(ctx, filter, update)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.ModifiedCount, nil
 }
 
 func (r *identityAuthRepository) InsertUserCredentials(ctx context.Context, user *domain.User) (primitive.ObjectID, error) {

@@ -13,5 +13,6 @@ func List() []migrator.Migration {
 		Migration_20260124_RefreshSessionsCollection_1,
 		Migration_20260124_RefreshSessionsIndexes_1,
 		Migration_20260124_UsersAuthFields_1,
+		Migration_20260125_AuthKeysRotatedAtIndex_1,
 	}
 }

@@ -101,6 +101,17 @@ func Start() {
 	authRepo := repository.NewIdentityAuthRepository(mongoClient, mongoCfg)
 	authSvc := service.NewIdentityAuthService(authRepo, authCfg)
 
+	authKeyRotator := service.NewAuthKeyRotator(
+		mongoClient.Database(mongoCfg.DatabaseName),
+		authRepo,
+		owner,
+		service.AuthKeyRotatorConfig{
+			RotationInterval: authCfg.KeyRotationInterval,
+			RetireAfter:      authCfg.KeyRetireAfter,
+		},
+		logrus.WithField("scope", "auth-key-rotation"),
+	)
+
 	grpcSrv, grpcLn, err := transport.StartGRPCServer(appCfg.GetGRPCConfig(), adminSvc, authSvc, mongoReadiness)
 	if err != nil {
 		loggerEntry.Fatalf("gRPC server init failed: %v", err)
@@ -131,6 +142,20 @@ func Start() {
 		}
 
 		return nil
+	})
+
+	g.Go(func() error {
+		ticker := time.NewTicker(authCfg.KeyRotationTickInterval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-ticker.C:
+				authKeyRotator.Tick(ctx)
+			}
+		}
 	})
 
 	g.Go(func() error {
